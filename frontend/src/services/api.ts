@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || "https://provalab.onrender.com";
+const API_BASE_URL = "https://provalab.onrender.com";
 
 let accessToken: string | null = localStorage.getItem("access_token");
 
