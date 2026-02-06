@@ -16,7 +16,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "https://math-blush-alpha.vercel.app/"
+        "https://math-blush-alpha.vercel.app/login"
     ],
     allow_credentials=True,
     allow_methods=["*"],
