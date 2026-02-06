@@ -24,10 +24,11 @@ app.add_middleware(
 )
 
 # Registrar rotas
-app.include_router(auth.router)
-app.include_router(profiles.router)
-app.include_router(exercises.router)
-app.include_router(attempts.router)
+app.include_router(auth.router, prefix="/auth", tags=["Auth"])
+app.include_router(profiles.router, prefix="/profiles", tags=["Profiles"])
+app.include_router(exercises.router, prefix="/exercises", tags=["Exercises"])
+app.include_router(attempts.router, prefix="/attempts", tags=["Attempts"])
+
 
 @app.get("/")
 def root():
