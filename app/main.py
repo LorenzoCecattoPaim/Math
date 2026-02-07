@@ -16,7 +16,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "https://math-blush-alpha.vercel.app"
+        "https://math-blush-alpha.vercel.app/"
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -24,11 +24,10 @@ app.add_middleware(
 )
 
 # Registrar rotas
-app.include_router(auth.router, prefix="/auth", tags=["Auth"])
-app.include_router(profiles.router, prefix="/profiles", tags=["Profiles"])
-app.include_router(exercises.router, prefix="/exercises", tags=["Exercises"])
-app.include_router(attempts.router, prefix="/attempts", tags=["Attempts"])
-
+app.include_router(auth.router)
+app.include_router(profiles.router)
+app.include_router(exercises.router)
+app.include_router(attempts.router)
 
 @app.get("/")
 def root():
