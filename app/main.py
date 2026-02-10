@@ -13,6 +13,12 @@ app = FastAPI(
     version="1.0.0"
 )
 
+from fastapi.responses import Response
+
+@app.options("/{path:path}")
+async def options_handler(path: str):
+    return Response(status_code=200)
+
 # Configurar CORS
 origins = os.getenv("CORS_ORIGINS", "").split(",")
 
