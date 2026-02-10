@@ -9,6 +9,8 @@ import "./index.css";
 
 const queryClient = new QueryClient();
 
+console.log("API BASE:", import.meta.env.VITE_API_URL);
+
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
