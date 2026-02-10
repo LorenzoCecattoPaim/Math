@@ -1,3 +1,4 @@
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import engine, Base
@@ -13,6 +14,7 @@ app = FastAPI(
 )
 
 # Configurar CORS
+origins = os.getenv("CORS_ORIGINS", "").split(",")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
