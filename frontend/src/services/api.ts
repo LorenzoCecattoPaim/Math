@@ -37,8 +37,7 @@ async function fetchWithAuth(endpoint: string, options: RequestInit = {}) {
 
   if (response.status === 401) {
     setAccessToken(null);
-    window.location.href = "/login";
-    throw new Error("Sessão expirada");
+    throw new Error("UNAUTHORIZED");
   }
 
   return response;
