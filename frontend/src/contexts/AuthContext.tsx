@@ -1,14 +1,12 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
-import {
-  authApi,
-  profileApi,
-  getAccessToken,
-  setAccessToken,
-} from "@/services/api";
+import { authApi, profileApi, getAccessToken, setAccessToken } from "@/services/api";
 
 interface User {
   id: string;
   email: string;
+  full_name: string | null;
+  google_id: string | null;
+  email_verified: boolean;
   created_at: string;
 }
 
@@ -19,18 +17,25 @@ interface Profile {
   avatar_url: string | null;
 }
 
+interface PendingGoogleAuth {
+  pendingToken: string;
+  email: string;
+  expiresInSeconds: number;
+}
+
 interface AuthContextType {
   user: User | null;
   profile: Profile | null;
   loading: boolean;
-  signUp: (
-    email: string,
-    password: string,
-    fullName: string
-  ) => Promise<{ error: Error | null }>;
-  signIn: (
-    email: string,
-    password: string
+  signUp: (email: string, password: string, fullName: string) => Promise<{ error: Error | null }>;
+  signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
+  startGoogleAuth: (googleAccessToken: string) => Promise<{
+    data: PendingGoogleAuth | null;
+    error: Error | null;
+  }>;
+  verifyGoogleEmailCode: (
+    pendingToken: string,
+    code: string
   ) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
 }
@@ -54,7 +59,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             const profileData = await profileApi.getProfile();
             setProfile(profileData);
           } catch {
-            // Profile may not exist yet
+            setProfile(null);
           }
         } catch {
           setAccessToken(null);
@@ -66,19 +71,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     checkAuth();
   }, []);
 
+  const syncAuthenticatedUser = async () => {
+    const userData = await authApi.getMe();
+    setUser(userData);
+
+    try {
+      const profileData = await profileApi.getProfile();
+      setProfile(profileData);
+    } catch {
+      setProfile(null);
+    }
+  };
+
   const signUp = async (email: string, password: string, fullName: string) => {
     try {
       await authApi.signup(email, password, fullName);
-      const userData = await authApi.getMe();
-      setUser(userData);
-
-      try {
-        const profileData = await profileApi.getProfile();
-        setProfile(profileData);
-      } catch {
-        // Profile may not exist yet
-      }
-
+      await syncAuthenticatedUser();
       return { error: null };
     } catch (error) {
       return { error: error as Error };
@@ -88,16 +96,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signIn = async (email: string, password: string) => {
     try {
       await authApi.login(email, password);
-      const userData = await authApi.getMe();
-      setUser(userData);
+      await syncAuthenticatedUser();
+      return { error: null };
+    } catch (error) {
+      return { error: error as Error };
+    }
+  };
 
-      try {
-        const profileData = await profileApi.getProfile();
-        setProfile(profileData);
-      } catch {
-        // Profile may not exist yet
-      }
+  const startGoogleAuth = async (googleAccessToken: string) => {
+    try {
+      const response = await authApi.googleAuth(googleAccessToken);
+      return {
+        data: {
+          pendingToken: response.pending_token,
+          email: response.email,
+          expiresInSeconds: response.code_expires_in_seconds,
+        },
+        error: null,
+      };
+    } catch (error) {
+      return { data: null, error: error as Error };
+    }
+  };
 
+  const verifyGoogleEmailCode = async (pendingToken: string, code: string) => {
+    try {
+      await authApi.verifyEmailCode(pendingToken, code);
+      await syncAuthenticatedUser();
       return { error: null };
     } catch (error) {
       return { error: error as Error };
@@ -112,7 +137,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, profile, loading, signUp, signIn, signOut }}
+      value={{
+        user,
+        profile,
+        loading,
+        signUp,
+        signIn,
+        startGoogleAuth,
+        verifyGoogleEmailCode,
+        signOut,
+      }}
     >
       {children}
     </AuthContext.Provider>

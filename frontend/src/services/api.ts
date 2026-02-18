@@ -1,6 +1,5 @@
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
-
 let accessToken: string | null = localStorage.getItem("access_token");
 
 export function setAccessToken(token: string | null) {
@@ -16,16 +15,20 @@ export function getAccessToken() {
   return accessToken;
 }
 
+async function parseError(response: Response, fallbackMessage: string): Promise<never> {
+  const error = await response.json().catch(() => null);
+  throw new Error(error?.detail || fallbackMessage);
+}
+
 async function fetchWithAuth(endpoint: string, options: RequestInit = {}) {
   const headers: Record<string, string> = {
     ...(options.headers as Record<string, string>),
   };
 
   if (accessToken) {
-    headers["Authorization"] = `Bearer ${accessToken}`;
+    headers.Authorization = `Bearer ${accessToken}`;
   }
 
-  // Só define Content-Type se houver body
   if (options.body && !headers["Content-Type"]) {
     headers["Content-Type"] = "application/json";
   }
@@ -43,8 +46,6 @@ async function fetchWithAuth(endpoint: string, options: RequestInit = {}) {
   return response;
 }
 
-
-// Auth API
 export const authApi = {
   async signup(email: string, password: string, fullName: string) {
     const response = await fetch(`${API_BASE_URL}/auth/signup`, {
@@ -54,8 +55,7 @@ export const authApi = {
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || "Erro ao criar conta");
+      return parseError(response, "Erro ao criar conta");
     }
 
     const data = await response.json();
@@ -75,8 +75,43 @@ export const authApi = {
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || "Email ou senha incorretos");
+      return parseError(response, "Email ou senha incorretos");
+    }
+
+    const data = await response.json();
+    setAccessToken(data.access_token);
+    return data;
+  },
+
+  async googleAuth(googleAccessToken: string) {
+    const response = await fetch(`${API_BASE_URL}/auth/google`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ access_token: googleAccessToken }),
+    });
+
+    if (!response.ok) {
+      return parseError(response, "Nao foi possivel autenticar com Google");
+    }
+
+    return response.json() as Promise<{
+      pending_token: string;
+      pending_token_type: string;
+      verification_required: boolean;
+      email: string;
+      code_expires_in_seconds: number;
+    }>;
+  },
+
+  async verifyEmailCode(pendingToken: string, code: string) {
+    const response = await fetch(`${API_BASE_URL}/auth/verify-email-code`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pending_token: pendingToken, code }),
+    });
+
+    if (!response.ok) {
+      return parseError(response, "Codigo invalido ou expirado");
     }
 
     const data = await response.json();
@@ -88,7 +123,7 @@ export const authApi = {
     const response = await fetchWithAuth("/auth/me");
 
     if (!response.ok) {
-      throw new Error("Não autenticado");
+      return parseError(response, "Nao autenticado");
     }
 
     return response.json();
@@ -99,13 +134,11 @@ export const authApi = {
   },
 };
 
-// Profile API
 export const profileApi = {
   async getProfile() {
     const response = await fetchWithAuth("/profiles/me");
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || "Erro ao carregar perfil");
+      return parseError(response, "Erro ao carregar perfil");
     }
     return response.json();
   },
@@ -116,22 +149,19 @@ export const profileApi = {
       body: JSON.stringify(data),
     });
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || "Erro ao atualizar perfil");
+      return parseError(response, "Erro ao atualizar perfil");
     }
     return response.json();
   },
 };
 
-// Exercises API
 export const exercisesApi = {
   async getRandomExercise(subject: string, difficulty: string) {
     const response = await fetchWithAuth(
       `/exercises/random?subject=${subject}&difficulty=${difficulty}`
     );
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || "Erro ao carregar exercício");
+      return parseError(response, "Erro ao carregar exercicio");
     }
     return response.json();
   },
@@ -144,14 +174,12 @@ export const exercisesApi = {
 
     const response = await fetchWithAuth(`/exercises?${params}`);
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || "Erro ao listar exercícios");
+      return parseError(response, "Erro ao listar exercicios");
     }
     return response.json();
   },
 };
 
-// Attempts API
 export const attemptsApi = {
   async submitAttempt(data: {
     exercise_id: string;
@@ -164,8 +192,7 @@ export const attemptsApi = {
       body: JSON.stringify(data),
     });
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || "Erro ao salvar tentativa");
+      return parseError(response, "Erro ao salvar tentativa");
     }
     return response.json();
   },
@@ -173,8 +200,7 @@ export const attemptsApi = {
   async getHistory(limit = 50) {
     const response = await fetchWithAuth(`/attempts?limit=${limit}`);
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || "Erro ao carregar histórico");
+      return parseError(response, "Erro ao carregar historico");
     }
     return response.json();
   },
@@ -182,8 +208,7 @@ export const attemptsApi = {
   async getStats() {
     const response = await fetchWithAuth("/attempts/stats");
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || "Erro ao carregar estatísticas");
+      return parseError(response, "Erro ao carregar estatisticas");
     }
     return response.json();
   },
@@ -191,8 +216,7 @@ export const attemptsApi = {
   async getProgressData() {
     const response = await fetchWithAuth("/attempts/progress");
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || "Erro ao carregar progresso");
+      return parseError(response, "Erro ao carregar progresso");
     }
     return response.json();
   },

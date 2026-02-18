@@ -22,7 +22,10 @@ END $$;
 CREATE TABLE IF NOT EXISTS public.users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     email VARCHAR(255) UNIQUE NOT NULL,
-    password_hash TEXT NOT NULL,
+    full_name VARCHAR(255),
+    password_hash TEXT,
+    google_id VARCHAR(255) UNIQUE,
+    email_verified BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -66,6 +69,28 @@ CREATE TABLE IF NOT EXISTS public.exercise_attempts (
 );
 
 -- ============================================
+-- Tabela de CÃ³digos de VerificaÃ§Ã£o de Email
+-- ============================================
+CREATE TABLE IF NOT EXISTS public.email_verification_codes (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+    code_hash VARCHAR(255) NOT NULL,
+    attempts_count INTEGER NOT NULL DEFAULT 0,
+    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    consumed_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- ============================================
+-- Migração para Bases Existentes (idempotente)
+-- ============================================
+ALTER TABLE public.users ADD COLUMN IF NOT EXISTS full_name VARCHAR(255);
+ALTER TABLE public.users ALTER COLUMN password_hash DROP NOT NULL;
+ALTER TABLE public.users ADD COLUMN IF NOT EXISTS google_id VARCHAR(255);
+ALTER TABLE public.users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN NOT NULL DEFAULT FALSE;
+CREATE UNIQUE INDEX IF NOT EXISTS uq_users_google_id ON public.users(google_id) WHERE google_id IS NOT NULL;
+
+-- ============================================
 -- Índices para Performance
 -- ============================================
 CREATE INDEX IF NOT EXISTS idx_users_email ON public.users(email);
@@ -74,6 +99,9 @@ CREATE INDEX IF NOT EXISTS idx_exercises_subject ON public.exercises(subject);
 CREATE INDEX IF NOT EXISTS idx_exercises_difficulty ON public.exercises(difficulty);
 CREATE INDEX IF NOT EXISTS idx_attempts_user_id ON public.exercise_attempts(user_id);
 CREATE INDEX IF NOT EXISTS idx_attempts_exercise_id ON public.exercise_attempts(exercise_id);
+CREATE INDEX IF NOT EXISTS idx_users_google_id ON public.users(google_id);
+CREATE INDEX IF NOT EXISTS idx_verification_codes_user_id ON public.email_verification_codes(user_id);
+CREATE INDEX IF NOT EXISTS idx_verification_codes_expires_at ON public.email_verification_codes(expires_at);
 
 -- ============================================
 -- Trigger para Atualizar updated_at

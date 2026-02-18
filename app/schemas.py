@@ -19,6 +19,9 @@ class UserLogin(BaseModel):
 class UserResponse(BaseModel):
     id: UUID
     email: str
+    full_name: Optional[str] = None
+    google_id: Optional[str] = None
+    email_verified: bool
     created_at: datetime
     
     class Config:
@@ -27,6 +30,23 @@ class UserResponse(BaseModel):
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
+
+
+class GoogleAuthRequest(BaseModel):
+    access_token: str
+
+
+class GoogleAuthResponse(BaseModel):
+    pending_token: str
+    pending_token_type: str = "bearer"
+    verification_required: bool = True
+    email: str
+    code_expires_in_seconds: int
+
+
+class VerifyEmailCodeRequest(BaseModel):
+    pending_token: str
+    code: str
 
 # ========================
 # Profile Schemas

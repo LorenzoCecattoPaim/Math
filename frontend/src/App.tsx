@@ -7,6 +7,7 @@ import Dashboard from "@/pages/Dashboard";
 import Practice from "@/pages/Practice";
 import History from "@/pages/History";
 import Progress from "@/pages/Progress";
+import VerifyEmail from "@/pages/VerifyEmail";
 import NotFound from "@/pages/NotFound";
 
 function App() {
@@ -15,6 +16,7 @@ function App() {
       <Route path="/" element={<Landing />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/verify-email" element={<VerifyEmail />} />
       <Route
         path="/dashboard"
         element={

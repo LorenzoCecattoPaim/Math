@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { ArrowLeft, GraduationCap, Loader2 } from "lucide-react";
+
+import { GoogleLoginButton } from "@/components/GoogleLoginButton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
-import { GraduationCap, ArrowLeft, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export default function Register() {
@@ -12,9 +14,45 @@ export default function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const { signUp } = useAuth();
+
+  const { signUp, startGoogleAuth } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  const handleGoogleError = useCallback(
+    (message: string) => {
+      toast({
+        variant: "destructive",
+        title: "Erro no login Google",
+        description: message,
+      });
+    },
+    [toast]
+  );
+
+  const handleGoogleSuccess = async (googleAccessToken: string) => {
+    const { data, error } = await startGoogleAuth(googleAccessToken);
+
+    if (error || !data) {
+      toast({
+        variant: "destructive",
+        title: "Erro ao iniciar verificacao",
+        description: error?.message || "Nao foi possivel continuar com Google.",
+      });
+      return;
+    }
+
+    toast({
+      title: "Codigo enviado",
+      description: `Verifique o email ${data.email} para concluir o acesso.`,
+    });
+
+    const params = new URLSearchParams({
+      pending_token: data.pendingToken,
+      email: data.email,
+    });
+    navigate(`/verify-email?${params.toString()}`);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,7 +96,7 @@ export default function Register() {
             className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-8 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
-            Voltar ao início
+            Voltar ao inicio
           </Link>
 
           <div className="mb-8">
@@ -66,6 +104,22 @@ export default function Register() {
             <p className="text-muted-foreground">
               Comece sua jornada de aprendizado hoje mesmo.
             </p>
+          </div>
+
+          <div className="space-y-4 mb-6">
+            <GoogleLoginButton
+              onSuccess={handleGoogleSuccess}
+              onError={handleGoogleError}
+              disabled={loading}
+            />
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-background px-2 text-muted-foreground">ou</span>
+              </div>
+            </div>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -100,16 +154,14 @@ export default function Register() {
               <Input
                 id="password"
                 type="password"
-                placeholder="••••••••"
+                placeholder="........"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 minLength={6}
                 className="h-12"
               />
-              <p className="text-xs text-muted-foreground">
-                Mínimo de 6 caracteres
-              </p>
+              <p className="text-xs text-muted-foreground">Minimo de 6 caracteres</p>
             </div>
 
             <Button
@@ -131,11 +183,8 @@ export default function Register() {
           </form>
 
           <p className="mt-8 text-center text-muted-foreground">
-            Já tem uma conta?{" "}
-            <Link
-              to="/login"
-              className="text-primary font-medium hover:underline"
-            >
+            Ja tem uma conta?{" "}
+            <Link to="/login" className="text-primary font-medium hover:underline">
               Entrar
             </Link>
           </p>
@@ -149,7 +198,7 @@ export default function Register() {
           </div>
           <h2 className="text-4xl font-bold mb-4 text-center">ProvaLab</h2>
           <p className="text-xl text-white/80 text-center max-w-md">
-            Pratique, aprenda e evolua com exercícios personalizados.
+            Pratique, aprenda e evolua com exercicios personalizados.
           </p>
         </div>
       </div>

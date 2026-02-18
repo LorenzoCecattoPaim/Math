@@ -24,11 +24,17 @@ class User(Base):
     
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     email = Column(String(255), unique=True, nullable=False, index=True)
-    password_hash = Column(Text, nullable=False)
+    full_name = Column(String(255), nullable=True)
+    password_hash = Column(Text, nullable=True)
+    google_id = Column(String(255), unique=True, nullable=True, index=True)
+    email_verified = Column(Boolean, nullable=False, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     
     profile = relationship("Profile", back_populates="user", uselist=False)
     attempts = relationship("ExerciseAttempt", back_populates="user")
+    verification_codes = relationship(
+        "EmailVerificationCode", back_populates="user", cascade="all, delete-orphan"
+    )
 
 class Profile(Base):
     __tablename__ = "profiles"
@@ -69,3 +75,19 @@ class ExerciseAttempt(Base):
     
     user = relationship("User", back_populates="attempts")
     exercise = relationship("Exercise", back_populates="attempts")
+
+
+class EmailVerificationCode(Base):
+    __tablename__ = "email_verification_codes"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    code_hash = Column(String(255), nullable=False)
+    attempts_count = Column(Integer, nullable=False, default=0)
+    expires_at = Column(DateTime, nullable=False)
+    consumed_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    user = relationship("User", back_populates="verification_codes")
