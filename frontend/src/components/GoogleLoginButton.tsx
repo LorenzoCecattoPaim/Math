@@ -123,7 +123,7 @@ export function GoogleLoginButton({
       onError(
         "Tempo excedido ao receber resposta do Google. Confira origem autorizada no Google Cloud e tente novamente."
       );
-    }, 20000);
+    }, 120000);
 
     try {
       tokenClient.requestAccessToken({ prompt: "consent" });
