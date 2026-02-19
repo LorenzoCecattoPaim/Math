@@ -92,8 +92,7 @@ export function GoogleLoginButton({
   };
 
   const handleClick = () => {
-    if (!scriptLoaded) {
-      onError("Login Google ainda esta carregando. Tente novamente em instantes.");
+    if (!googleClientId || !scriptLoaded) {
       return;
     }
 
@@ -114,12 +113,19 @@ export function GoogleLoginButton({
       size="lg"
       className="w-full"
       onClick={handleClick}
-      disabled={disabled || authLoading}
+      disabled={disabled || authLoading || !googleClientId || !scriptLoaded}
     >
       {authLoading ? (
         <>
           <Loader2 className="w-4 h-4 animate-spin" />
           Conectando...
+        </>
+      ) : !googleClientId ? (
+        "Google nao configurado"
+      ) : !scriptLoaded ? (
+        <>
+          <Loader2 className="w-4 h-4 animate-spin" />
+          Carregando Google...
         </>
       ) : (
         <>
