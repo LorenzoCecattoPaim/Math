@@ -128,6 +128,7 @@ export default function Register() {
               <Input
                 id="fullName"
                 type="text"
+                autoComplete="name"
                 placeholder="Seu nome"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
@@ -141,6 +142,7 @@ export default function Register() {
               <Input
                 id="email"
                 type="email"
+                autoComplete="email"
                 placeholder="seu@email.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -154,6 +156,7 @@ export default function Register() {
               <Input
                 id="password"
                 type="password"
+                autoComplete="new-password"
                 placeholder="........"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
