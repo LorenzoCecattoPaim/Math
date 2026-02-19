@@ -108,7 +108,7 @@ export const authApi = {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ access_token: googleAccessToken }),
-    }, 70000);
+    }, 180000);
 
     if (!response.ok) {
       return parseError(response, "Nao foi possivel autenticar com Google");

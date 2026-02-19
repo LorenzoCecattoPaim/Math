@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
@@ -14,6 +14,7 @@ from app.schemas import (
     VerifyEmailCodeRequest,
 )
 from app.services.auth_service import start_google_auth, verify_email_code_and_issue_token
+from app.services.email_service import send_verification_email
 
 router = APIRouter(prefix="/auth", tags=["Autenticacao"])
 
@@ -80,9 +81,25 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
 
 
 @router.post("/google", response_model=GoogleAuthResponse)
-def google_auth(payload: GoogleAuthRequest, db: Session = Depends(get_db)):
+def google_auth(
+    payload: GoogleAuthRequest,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+):
     result = start_google_auth(payload.access_token, db)
-    return GoogleAuthResponse(**result)
+    background_tasks.add_task(
+        send_verification_email,
+        result["recipient_email"],
+        result["recipient_name"],
+        result["verification_code"],
+    )
+    return GoogleAuthResponse(
+        pending_token=result["pending_token"],
+        pending_token_type="bearer",
+        verification_required=True,
+        email=result["email"],
+        code_expires_in_seconds=result["code_expires_in_seconds"],
+    )
 
 
 @router.post("/verify-email-code", response_model=TokenResponse)

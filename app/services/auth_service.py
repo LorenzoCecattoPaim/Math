@@ -19,7 +19,6 @@ from app.config import (
     JWT_SECRET_KEY,
 )
 from app.models import EmailVerificationCode, Profile, User
-from app.services.email_service import send_verification_email
 
 
 def _fetch_json(url: str, headers: dict[str, str] | None = None) -> dict:
@@ -154,8 +153,6 @@ def start_google_auth(access_token: str, db: Session) -> dict:
     db.commit()
     db.refresh(verification)
 
-    send_verification_email(user.email, user.full_name, raw_code)
-
     # Token temporario: nao da acesso final, apenas autoriza a etapa de verificacao.
     pending_token = create_access_token(
         data={
@@ -170,6 +167,9 @@ def start_google_auth(access_token: str, db: Session) -> dict:
         "pending_token": pending_token,
         "email": user.email,
         "code_expires_in_seconds": EMAIL_VERIFICATION_EXPIRATION_MINUTES * 60,
+        "recipient_email": user.email,
+        "recipient_name": user.full_name,
+        "verification_code": raw_code,
     }
 
 
