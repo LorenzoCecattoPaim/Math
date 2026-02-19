@@ -28,6 +28,7 @@ export function GoogleLoginButton({
 }: GoogleLoginButtonProps) {
   const [scriptLoaded, setScriptLoaded] = useState(false);
   const [authLoading, setAuthLoading] = useState(false);
+  const requestTimeoutRef = useRef<number | null>(null);
   const clientRef = useRef<{
     requestAccessToken: (overrideConfig?: { prompt?: string }) => void;
   } | null>(null);
@@ -60,6 +61,14 @@ export function GoogleLoginButton({
     document.body.appendChild(script);
   }, [googleClientId, onError]);
 
+  useEffect(() => {
+    return () => {
+      if (requestTimeoutRef.current !== null) {
+        window.clearTimeout(requestTimeoutRef.current);
+      }
+    };
+  }, []);
+
   const ensureTokenClient = () => {
     if (clientRef.current) {
       return clientRef.current;
@@ -74,6 +83,11 @@ export function GoogleLoginButton({
       client_id: googleClientId,
       scope: "openid email profile",
       callback: async (response) => {
+        if (requestTimeoutRef.current !== null) {
+          window.clearTimeout(requestTimeoutRef.current);
+          requestTimeoutRef.current = null;
+        }
+
         if (response.error || !response.access_token) {
           setAuthLoading(false);
           onError("Falha ao autenticar com Google. Tente novamente.");
@@ -85,6 +99,16 @@ export function GoogleLoginButton({
         } finally {
           setAuthLoading(false);
         }
+      },
+      error_callback: (error) => {
+        if (requestTimeoutRef.current !== null) {
+          window.clearTimeout(requestTimeoutRef.current);
+          requestTimeoutRef.current = null;
+        }
+        setAuthLoading(false);
+        onError(
+          `Falha no popup do Google (${error.type || "erro_desconhecido"}). Verifique bloqueador de popup e tente novamente.`
+        );
       },
     });
 
@@ -103,7 +127,23 @@ export function GoogleLoginButton({
     }
 
     setAuthLoading(true);
-    tokenClient.requestAccessToken({ prompt: "select_account" });
+    requestTimeoutRef.current = window.setTimeout(() => {
+      setAuthLoading(false);
+      onError(
+        "Tempo excedido ao receber resposta do Google. Confira origem autorizada no Google Cloud e tente novamente."
+      );
+    }, 20000);
+
+    try {
+      tokenClient.requestAccessToken({ prompt: "select_account" });
+    } catch {
+      if (requestTimeoutRef.current !== null) {
+        window.clearTimeout(requestTimeoutRef.current);
+        requestTimeoutRef.current = null;
+      }
+      setAuthLoading(false);
+      onError("Nao foi possivel iniciar o popup do Google.");
+    }
   };
 
   return (

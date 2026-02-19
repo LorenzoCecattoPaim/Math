@@ -20,6 +20,26 @@ async function parseError(response: Response, fallbackMessage: string): Promise<
   throw new Error(error?.detail || fallbackMessage);
 }
 
+async function fetchWithTimeout(
+  url: string,
+  options: RequestInit = {},
+  timeoutMs = 20000
+) {
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") {
+      throw new Error("Tempo esgotado na comunicacao com o servidor.");
+    }
+    throw error;
+  } finally {
+    window.clearTimeout(timeoutId);
+  }
+}
+
 async function fetchWithAuth(endpoint: string, options: RequestInit = {}) {
   const headers: Record<string, string> = {
     ...(options.headers as Record<string, string>),
@@ -33,7 +53,7 @@ async function fetchWithAuth(endpoint: string, options: RequestInit = {}) {
     headers["Content-Type"] = "application/json";
   }
 
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+  const response = await fetchWithTimeout(`${API_BASE_URL}${endpoint}`, {
     ...options,
     headers,
   });
@@ -48,7 +68,7 @@ async function fetchWithAuth(endpoint: string, options: RequestInit = {}) {
 
 export const authApi = {
   async signup(email: string, password: string, fullName: string) {
-    const response = await fetch(`${API_BASE_URL}/auth/signup`, {
+    const response = await fetchWithTimeout(`${API_BASE_URL}/auth/signup`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password, full_name: fullName }),
@@ -68,7 +88,7 @@ export const authApi = {
     formData.append("username", email);
     formData.append("password", password);
 
-    const response = await fetch(`${API_BASE_URL}/auth/login`, {
+    const response = await fetchWithTimeout(`${API_BASE_URL}/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: formData,
@@ -84,11 +104,11 @@ export const authApi = {
   },
 
   async googleAuth(googleAccessToken: string) {
-    const response = await fetch(`${API_BASE_URL}/auth/google`, {
+    const response = await fetchWithTimeout(`${API_BASE_URL}/auth/google`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ access_token: googleAccessToken }),
-    });
+    }, 25000);
 
     if (!response.ok) {
       return parseError(response, "Nao foi possivel autenticar com Google");
@@ -104,7 +124,7 @@ export const authApi = {
   },
 
   async verifyEmailCode(pendingToken: string, code: string) {
-    const response = await fetch(`${API_BASE_URL}/auth/verify-email-code`, {
+    const response = await fetchWithTimeout(`${API_BASE_URL}/auth/verify-email-code`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ pending_token: pendingToken, code }),
