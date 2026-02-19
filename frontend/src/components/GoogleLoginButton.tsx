@@ -29,9 +29,6 @@ export function GoogleLoginButton({
   const [scriptLoaded, setScriptLoaded] = useState(false);
   const [authLoading, setAuthLoading] = useState(false);
   const requestTimeoutRef = useRef<number | null>(null);
-  const clientRef = useRef<{
-    requestAccessToken: (overrideConfig?: { prompt?: string }) => void;
-  } | null>(null);
 
   const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
@@ -70,16 +67,12 @@ export function GoogleLoginButton({
   }, []);
 
   const ensureTokenClient = () => {
-    if (clientRef.current) {
-      return clientRef.current;
-    }
-
     if (!window.google?.accounts?.oauth2 || !googleClientId) {
       return null;
     }
 
     // Usa OAuth popup para obter access token do Google sem sair da tela.
-    clientRef.current = window.google.accounts.oauth2.initTokenClient({
+    return window.google.accounts.oauth2.initTokenClient({
       client_id: googleClientId,
       scope: "openid email profile",
       callback: async (response) => {
@@ -111,8 +104,6 @@ export function GoogleLoginButton({
         );
       },
     });
-
-    return clientRef.current;
   };
 
   const handleClick = () => {
@@ -135,7 +126,7 @@ export function GoogleLoginButton({
     }, 20000);
 
     try {
-      tokenClient.requestAccessToken({ prompt: "select_account" });
+      tokenClient.requestAccessToken({ prompt: "consent" });
     } catch {
       if (requestTimeoutRef.current !== null) {
         window.clearTimeout(requestTimeoutRef.current);
