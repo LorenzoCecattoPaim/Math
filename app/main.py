@@ -1,8 +1,10 @@
 import os
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from app.database import engine, Base
-from app.routers import auth, profiles, exercises, attempts
+from app.exceptions import FreeLimitReachedError
+from app.routers import auth, profiles, exercises, attempts, hotmart
 
 # Criar tabelas no banco
 Base.metadata.create_all(bind=engine)
@@ -19,6 +21,20 @@ from fastapi.responses import Response
 async def options_handler(path: str):
     return Response(status_code=200)
 
+
+@app.exception_handler(FreeLimitReachedError)
+async def free_limit_reached_handler(
+    request: Request,
+    exc: FreeLimitReachedError,
+):
+    return JSONResponse(
+        status_code=402,
+        content={
+            "error": "FREE_LIMIT_REACHED",
+            "checkout_url": exc.checkout_url,
+        },
+    )
+
 # Configurar CORS
 app.add_middleware(
     CORSMiddleware,
@@ -33,6 +49,7 @@ app.include_router(auth.router)
 app.include_router(profiles.router)
 app.include_router(exercises.router)
 app.include_router(attempts.router)
+app.include_router(hotmart.router)
 
 @app.get("/")
 def root():

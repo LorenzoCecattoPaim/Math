@@ -23,6 +23,7 @@ from app.services.auth_service import (
     verify_email_magic_link_and_issue_token,
 )
 from app.services.email_service import send_verification_email
+from app.services.plan_service import ensure_user_plan_profile
 
 router = APIRouter(prefix="/auth", tags=["Autenticacao"])
 
@@ -48,6 +49,7 @@ def signup(user_data: UserCreate, db: Session = Depends(get_db)):
     db.refresh(new_user)
 
     db.add(Profile(user_id=new_user.id, full_name=user_data.full_name))
+    ensure_user_plan_profile(new_user)
     db.commit()
 
     access_token = create_access_token(data={"sub": str(new_user.id)})

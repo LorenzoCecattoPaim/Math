@@ -71,6 +71,20 @@ class ProfileUpdate(BaseModel):
     full_name: Optional[str] = None
     avatar_url: Optional[str] = None
 
+
+class UserPlanResponse(BaseModel):
+    id: UUID
+    email: str
+    plan: str
+    free_uses: int
+    uses_count: int
+    hotmart_purchase_id: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
 # ========================
 # Exercise Schemas
 # ========================

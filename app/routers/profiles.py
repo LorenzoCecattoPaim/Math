@@ -2,8 +2,9 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import User, Profile
-from app.schemas import ProfileResponse, ProfileUpdate
+from app.schemas import ProfileResponse, ProfileUpdate, UserPlanResponse
 from app.auth import get_current_user
+from app.services.plan_service import ensure_user_plan_profile
 
 router = APIRouter(prefix="/profiles", tags=["Perfis"])
 
@@ -42,3 +43,16 @@ def update_my_profile(
     db.commit()
     db.refresh(profile)
     return profile
+
+
+@router.get("/plan", response_model=UserPlanResponse)
+def get_my_plan(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Obter status do plano e consumo do usuario autenticado"""
+    plan_profile = ensure_user_plan_profile(current_user)
+    db.add(current_user)
+    db.commit()
+    db.refresh(plan_profile)
+    return plan_profile

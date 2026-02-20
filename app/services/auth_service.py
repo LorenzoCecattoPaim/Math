@@ -19,6 +19,7 @@ from app.config import (
     JWT_SECRET_KEY,
 )
 from app.models import EmailVerificationCode, Profile, User
+from app.services.plan_service import ensure_user_plan_profile
 
 
 def _fetch_json(url: str, headers: dict[str, str] | None = None) -> dict:
@@ -120,6 +121,7 @@ def start_google_auth(access_token: str, db: Session) -> dict:
         db.refresh(user)
 
         db.add(Profile(user_id=user.id, full_name=full_name))
+        ensure_user_plan_profile(user)
         db.commit()
     else:
         if user.google_id and user.google_id != google_id:
@@ -134,7 +136,8 @@ def start_google_auth(access_token: str, db: Session) -> dict:
         db.commit()
         if not user.profile:
             db.add(Profile(user_id=user.id, full_name=full_name or user.full_name))
-            db.commit()
+        ensure_user_plan_profile(user)
+        db.commit()
 
     now = datetime.utcnow()
     # Invalida codigos pendentes antigos para manter apenas o mais recente.

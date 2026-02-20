@@ -82,6 +82,20 @@ CREATE TABLE IF NOT EXISTS public.email_verification_codes (
 );
 
 -- ============================================
+-- Tabela de Plano e Consumo do Usuario
+-- ============================================
+CREATE TABLE IF NOT EXISTS public.users_profile (
+    id UUID PRIMARY KEY REFERENCES public.users(id) ON DELETE CASCADE,
+    email TEXT NOT NULL,
+    plan TEXT NOT NULL DEFAULT 'free',
+    free_uses INTEGER NOT NULL DEFAULT 5,
+    uses_count INTEGER NOT NULL DEFAULT 0,
+    hotmart_purchase_id TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- ============================================
 -- Migração para Bases Existentes (idempotente)
 -- ============================================
 ALTER TABLE public.users ADD COLUMN IF NOT EXISTS full_name VARCHAR(255);
@@ -89,6 +103,14 @@ ALTER TABLE public.users ALTER COLUMN password_hash DROP NOT NULL;
 ALTER TABLE public.users ADD COLUMN IF NOT EXISTS google_id VARCHAR(255);
 ALTER TABLE public.users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN NOT NULL DEFAULT FALSE;
 CREATE UNIQUE INDEX IF NOT EXISTS uq_users_google_id ON public.users(google_id) WHERE google_id IS NOT NULL;
+ALTER TABLE public.users_profile ADD COLUMN IF NOT EXISTS email TEXT;
+ALTER TABLE public.users_profile ALTER COLUMN email SET NOT NULL;
+ALTER TABLE public.users_profile ADD COLUMN IF NOT EXISTS plan TEXT NOT NULL DEFAULT 'free';
+ALTER TABLE public.users_profile ADD COLUMN IF NOT EXISTS free_uses INTEGER NOT NULL DEFAULT 5;
+ALTER TABLE public.users_profile ADD COLUMN IF NOT EXISTS uses_count INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE public.users_profile ADD COLUMN IF NOT EXISTS hotmart_purchase_id TEXT;
+ALTER TABLE public.users_profile ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
+ALTER TABLE public.users_profile ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
 
 -- ============================================
 -- Índices para Performance
@@ -102,6 +124,8 @@ CREATE INDEX IF NOT EXISTS idx_attempts_exercise_id ON public.exercise_attempts(
 CREATE INDEX IF NOT EXISTS idx_users_google_id ON public.users(google_id);
 CREATE INDEX IF NOT EXISTS idx_verification_codes_user_id ON public.email_verification_codes(user_id);
 CREATE INDEX IF NOT EXISTS idx_verification_codes_expires_at ON public.email_verification_codes(expires_at);
+CREATE INDEX IF NOT EXISTS idx_users_profile_email ON public.users_profile(email);
+CREATE INDEX IF NOT EXISTS idx_users_profile_plan ON public.users_profile(plan);
 
 -- ============================================
 -- Trigger para Atualizar updated_at
@@ -117,6 +141,12 @@ $$ language 'plpgsql';
 DROP TRIGGER IF EXISTS update_profiles_updated_at ON public.profiles;
 CREATE TRIGGER update_profiles_updated_at
     BEFORE UPDATE ON public.profiles
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_users_profile_updated_at ON public.users_profile;
+CREATE TRIGGER update_users_profile_updated_at
+    BEFORE UPDATE ON public.users_profile
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
 

@@ -7,6 +7,7 @@ from app.database import get_db
 from app.models import Exercise, User
 from app.schemas import ExerciseResponse, ExerciseCreate
 from app.auth import get_current_user
+from app.dependencies.plan import check_plan_limit
 
 router = APIRouter(prefix="/exercises", tags=["Exercícios"])
 
@@ -34,7 +35,7 @@ def get_random_exercise(
     subject: str = Query(..., description="Matéria do exercício"),
     difficulty: str = Query(..., description="Dificuldade do exercício"),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(check_plan_limit(increment_use=True))
 ):
     """Obter um exercício aleatório por matéria e dificuldade"""
     exercise = db.query(Exercise).filter(

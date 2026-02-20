@@ -1,4 +1,6 @@
 const API_BASE_URL = import.meta.env.VITE_API_URL;
+const HOTMART_CHECKOUT_URL =
+  import.meta.env.VITE_HOTMART_CHECKOUT_URL || "https://pay.hotmart.com/M104495821K";
 
 let accessToken: string | null = localStorage.getItem("access_token");
 
@@ -17,7 +19,19 @@ export function getAccessToken() {
 
 async function parseError(response: Response, fallbackMessage: string): Promise<never> {
   const error = await response.json().catch(() => null);
-  throw new Error(error?.detail || fallbackMessage);
+  const detail = error?.detail ?? error;
+
+  if (response.status === 402 && detail?.error === "FREE_LIMIT_REACHED") {
+    const checkoutUrl = detail?.checkout_url || HOTMART_CHECKOUT_URL;
+    window.location.href = checkoutUrl;
+    throw new Error("FREE_LIMIT_REACHED");
+  }
+
+  if (typeof detail === "string") {
+    throw new Error(detail);
+  }
+
+  throw new Error(fallbackMessage);
 }
 
 async function fetchWithTimeout(

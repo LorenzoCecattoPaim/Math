@@ -31,6 +31,12 @@ class User(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     
     profile = relationship("Profile", back_populates="user", uselist=False)
+    plan_profile = relationship(
+        "UserProfile",
+        back_populates="user",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )
     attempts = relationship("ExerciseAttempt", back_populates="user")
     verification_codes = relationship(
         "EmailVerificationCode", back_populates="user", cascade="all, delete-orphan"
@@ -91,3 +97,18 @@ class EmailVerificationCode(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     user = relationship("User", back_populates="verification_codes")
+
+
+class UserProfile(Base):
+    __tablename__ = "users_profile"
+
+    id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    email = Column(Text, nullable=False, index=True)
+    plan = Column(String(50), nullable=False, default="free")
+    free_uses = Column(Integer, nullable=False, default=5)
+    uses_count = Column(Integer, nullable=False, default=0)
+    hotmart_purchase_id = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    user = relationship("User", back_populates="plan_profile")
