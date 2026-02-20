@@ -37,6 +37,7 @@ interface AuthContextType {
     pendingToken: string,
     code: string
   ) => Promise<{ error: Error | null }>;
+  verifyGoogleMagicLink: (magicToken: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
 }
 
@@ -129,6 +130,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const verifyGoogleMagicLink = async (magicToken: string) => {
+    try {
+      await authApi.verifyEmailMagicLink(magicToken);
+      await syncAuthenticatedUser();
+      return { error: null };
+    } catch (error) {
+      return { error: error as Error };
+    }
+  };
+
   const signOut = async () => {
     authApi.logout();
     setUser(null);
@@ -145,6 +156,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         signIn,
         startGoogleAuth,
         verifyGoogleEmailCode,
+        verifyGoogleMagicLink,
         signOut,
       }}
     >

@@ -12,18 +12,25 @@ from app.config import (
 )
 
 
-def send_verification_email(recipient_email: str, recipient_name: str | None, code: str) -> None:
+def send_verification_email(
+    recipient_email: str,
+    recipient_name: str | None,
+    code: str,
+    magic_link: str,
+) -> None:
     if not SMTP_HOST or not SMTP_FROM_EMAIL:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Configuracao de email ausente no servidor.",
         )
 
-    subject = "Seu codigo de verificacao - ProvaLab"
+    subject = "Confirme seu login - ProvaLab"
     greeting_name = recipient_name or "usuario"
     body = (
-        f"Olá, {greeting_name}!\n\n"
-        "Use o codigo abaixo para concluir seu login no ProvaLab:\n\n"
+        f"Ola, {greeting_name}!\n\n"
+        "Clique no link abaixo para confirmar seu login no ProvaLab:\n\n"
+        f"{magic_link}\n\n"
+        "Se preferir, use o codigo abaixo na tela de verificacao:\n\n"
         f"{code}\n\n"
         "Este codigo expira em 10 minutos.\n"
         "Se voce nao solicitou este acesso, ignore este email."
@@ -47,4 +54,3 @@ def send_verification_email(recipient_email: str, recipient_name: str | None, co
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Nao foi possivel enviar o codigo de verificacao por email.",
         ) from exc
-

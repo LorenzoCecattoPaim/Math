@@ -139,6 +139,22 @@ export const authApi = {
     return data;
   },
 
+  async verifyEmailMagicLink(magicToken: string) {
+    const response = await fetchWithTimeout(`${API_BASE_URL}/auth/verify-email-link`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ magic_token: magicToken }),
+    }, 60000);
+
+    if (!response.ok) {
+      return parseError(response, "Link de verificacao invalido ou expirado");
+    }
+
+    const data = await response.json();
+    setAccessToken(data.access_token);
+    return data;
+  },
+
   async getMe() {
     const response = await fetchWithAuth("/auth/me");
 

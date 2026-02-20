@@ -48,6 +48,10 @@ class VerifyEmailCodeRequest(BaseModel):
     pending_token: str
     code: str
 
+
+class VerifyEmailLinkRequest(BaseModel):
+    magic_token: str
+
 # ========================
 # Profile Schemas
 # ========================

@@ -170,6 +170,8 @@ def start_google_auth(access_token: str, db: Session) -> dict:
         "recipient_email": user.email,
         "recipient_name": user.full_name,
         "verification_code": raw_code,
+        "verification_code_id": str(verification.id),
+        "user_id": str(user.id),
     }
 
 
@@ -260,4 +262,66 @@ def verify_email_code_and_issue_token(pending_token: str, code: str, db: Session
     user.email_verified = True
     db.commit()
 
+    return create_access_token(data={"sub": str(user.id)})
+
+
+def verify_email_magic_link_and_issue_token(magic_token: str, db: Session) -> str:
+    payload = decode_token(magic_token)
+    if not payload or payload.get("scope") != "email_magic_link":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Link de verificacao invalido ou expirado.",
+        )
+
+    user_id = payload.get("sub")
+    verification_code_id = payload.get("verification_code_id")
+    if not user_id or not verification_code_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Link de verificacao invalido.",
+        )
+
+    try:
+        user_uuid = UUID(str(user_id))
+        verification_uuid = UUID(str(verification_code_id))
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Link de verificacao invalido.",
+        )
+
+    verification = (
+        db.query(EmailVerificationCode)
+        .filter(
+            EmailVerificationCode.id == verification_uuid,
+            EmailVerificationCode.user_id == user_uuid,
+        )
+        .first()
+    )
+    if verification is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Solicitacao de verificacao nao encontrada.",
+        )
+    if verification.consumed_at is not None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Link ja utilizado.",
+        )
+    if verification.expires_at < datetime.utcnow():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Link expirado. Faca login com Google novamente.",
+        )
+
+    user = db.query(User).filter(User.id == user_uuid).first()
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Usuario nao encontrado.",
+        )
+
+    verification.consumed_at = datetime.utcnow()
+    user.email_verified = True
+    db.commit()
     return create_access_token(data={"sub": str(user.id)})

@@ -1,8 +1,11 @@
+from datetime import timedelta
+
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
 from app.auth import create_access_token, get_current_user, hash_password, verify_password
+from app.config import EMAIL_VERIFICATION_EXPIRATION_MINUTES, FRONTEND_URL
 from app.database import get_db
 from app.models import Profile, User
 from app.schemas import (
@@ -12,8 +15,13 @@ from app.schemas import (
     UserCreate,
     UserResponse,
     VerifyEmailCodeRequest,
+    VerifyEmailLinkRequest,
 )
-from app.services.auth_service import start_google_auth, verify_email_code_and_issue_token
+from app.services.auth_service import (
+    start_google_auth,
+    verify_email_code_and_issue_token,
+    verify_email_magic_link_and_issue_token,
+)
 from app.services.email_service import send_verification_email
 
 router = APIRouter(prefix="/auth", tags=["Autenticacao"])
@@ -87,11 +95,21 @@ def google_auth(
     db: Session = Depends(get_db),
 ):
     result = start_google_auth(payload.access_token, db)
+    magic_token = create_access_token(
+        data={
+            "sub": result["user_id"],
+            "scope": "email_magic_link",
+            "verification_code_id": result["verification_code_id"],
+        },
+        expires_delta=timedelta(minutes=EMAIL_VERIFICATION_EXPIRATION_MINUTES),
+    )
+    magic_link = f"{FRONTEND_URL.rstrip('/')}/verify-email?magic_token={magic_token}"
     background_tasks.add_task(
         send_verification_email,
         result["recipient_email"],
         result["recipient_name"],
         result["verification_code"],
+        magic_link,
     )
     return GoogleAuthResponse(
         pending_token=result["pending_token"],
@@ -109,6 +127,12 @@ def verify_email_code(payload: VerifyEmailCodeRequest, db: Session = Depends(get
         code=payload.code,
         db=db,
     )
+    return TokenResponse(access_token=access_token)
+
+
+@router.post("/verify-email-link", response_model=TokenResponse)
+def verify_email_link(payload: VerifyEmailLinkRequest, db: Session = Depends(get_db)):
+    access_token = verify_email_magic_link_and_issue_token(payload.magic_token, db)
     return TokenResponse(access_token=access_token)
 
 

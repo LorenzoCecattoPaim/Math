@@ -1,4 +1,4 @@
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, Loader2, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -11,13 +11,44 @@ export default function VerifyEmail() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { verifyGoogleEmailCode } = useAuth();
+  const { verifyGoogleEmailCode, verifyGoogleMagicLink } = useAuth();
 
   const pendingToken = searchParams.get("pending_token") || "";
+  const magicToken = searchParams.get("magic_token") || "";
   const email = searchParams.get("email") || "";
 
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
+  const [magicChecking, setMagicChecking] = useState(Boolean(magicToken));
+
+  useEffect(() => {
+    if (!magicToken) {
+      setMagicChecking(false);
+      return;
+    }
+
+    const runMagicVerification = async () => {
+      const { error } = await verifyGoogleMagicLink(magicToken);
+      setMagicChecking(false);
+
+      if (error) {
+        toast({
+          variant: "destructive",
+          title: "Link invalido",
+          description: error.message,
+        });
+        return;
+      }
+
+      toast({
+        title: "Email verificado",
+        description: "Login concluido com sucesso.",
+      });
+      navigate("/dashboard");
+    };
+
+    void runMagicVerification();
+  }, [magicToken, navigate, toast, verifyGoogleMagicLink]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -77,39 +108,45 @@ export default function VerifyEmail() {
           </div>
           <h1 className="text-2xl font-bold">Verificar Email</h1>
           <p className="text-sm text-muted-foreground">
-            Enviamos um codigo de 6 digitos para {email || "seu email"}.
+            Enviamos um link e um codigo de 6 digitos para {email || "seu email"}.
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <div className="space-y-2">
-            <Label htmlFor="verificationCode">Codigo</Label>
-            <Input
-              id="verificationCode"
-              type="text"
-              inputMode="numeric"
-              maxLength={6}
-              placeholder="000000"
-              value={code}
-              onChange={(e) => setCode(e.target.value.replace(/\\D/g, ""))}
-              className="h-12 text-center tracking-[0.35em] text-lg"
-              required
-            />
+        {magicChecking ? (
+          <div className="rounded-lg border bg-muted/40 p-4 text-sm text-muted-foreground flex items-center gap-2">
+            <Loader2 className="w-4 h-4 animate-spin" />
+            Validando link automaticamente...
           </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div className="space-y-2">
+              <Label htmlFor="verificationCode">Codigo</Label>
+              <Input
+                id="verificationCode"
+                type="text"
+                inputMode="numeric"
+                maxLength={6}
+                placeholder="000000"
+                value={code}
+                onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
+                className="h-12 text-center tracking-[0.35em] text-lg"
+                required
+              />
+            </div>
 
-          <Button type="submit" className="w-full" size="lg" disabled={loading}>
-            {loading ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                Confirmando...
-              </>
-            ) : (
-              "Confirmar codigo"
-            )}
-          </Button>
-        </form>
+            <Button type="submit" className="w-full" size="lg" disabled={loading}>
+              {loading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Confirmando...
+                </>
+              ) : (
+                "Confirmar codigo"
+              )}
+            </Button>
+          </form>
+        )}
       </div>
     </div>
   );
 }
-
