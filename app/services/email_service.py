@@ -1,6 +1,6 @@
 import smtplib
+import logging
 from email.message import EmailMessage
-from fastapi import HTTPException, status
 
 from app.config import (
     SMTP_FROM_EMAIL,
@@ -11,6 +11,8 @@ from app.config import (
     SMTP_USERNAME,
 )
 
+logger = logging.getLogger(__name__)
+
 
 def send_verification_email(
     recipient_email: str,
@@ -19,10 +21,8 @@ def send_verification_email(
     magic_link: str,
 ) -> None:
     if not SMTP_HOST or not SMTP_FROM_EMAIL:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Configuracao de email ausente no servidor.",
-        )
+        logger.error("SMTP config missing: SMTP_HOST or SMTP_FROM_EMAIL not set.")
+        return
 
     subject = "Confirme seu login - ProvaLab"
     greeting_name = recipient_name or "usuario"
@@ -49,8 +49,14 @@ def send_verification_email(
             if SMTP_USERNAME and SMTP_PASSWORD:
                 smtp.login(SMTP_USERNAME, SMTP_PASSWORD)
             smtp.send_message(message)
+        logger.info("Verification email sent to %s", recipient_email)
     except Exception as exc:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Nao foi possivel enviar o codigo de verificacao por email.",
-        ) from exc
+        logger.exception(
+            "Failed to send verification email. host=%s port=%s username=%s to=%s from=%s error=%s",
+            SMTP_HOST,
+            SMTP_PORT,
+            SMTP_USERNAME,
+            recipient_email,
+            SMTP_FROM_EMAIL,
+            str(exc),
+        )
