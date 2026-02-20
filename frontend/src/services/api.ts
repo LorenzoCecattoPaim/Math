@@ -1,4 +1,5 @@
 const API_BASE_URL = import.meta.env.VITE_API_URL;
+const DEFAULT_TIMEOUT_MS = Number(import.meta.env.VITE_API_TIMEOUT_MS ?? 90000);
 const HOTMART_CHECKOUT_URL =
   import.meta.env.VITE_HOTMART_CHECKOUT_URL || "https://pay.hotmart.com/M104495821K";
 
@@ -37,7 +38,7 @@ async function parseError(response: Response, fallbackMessage: string): Promise<
 async function fetchWithTimeout(
   url: string,
   options: RequestInit = {},
-  timeoutMs = 20000
+  timeoutMs = DEFAULT_TIMEOUT_MS
 ) {
   const controller = new AbortController();
   const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
@@ -122,7 +123,7 @@ export const authApi = {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ access_token: googleAccessToken }),
-    }, 180000);
+    }, Math.max(DEFAULT_TIMEOUT_MS, 180000));
 
     if (!response.ok) {
       return parseError(response, "Nao foi possivel autenticar com Google");
@@ -158,7 +159,7 @@ export const authApi = {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ magic_token: magicToken }),
-    }, 60000);
+    }, Math.max(DEFAULT_TIMEOUT_MS, 60000));
 
     if (!response.ok) {
       return parseError(response, "Link de verificacao invalido ou expirado");
