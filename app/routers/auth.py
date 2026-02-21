@@ -1,6 +1,6 @@
 from datetime import timedelta
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
@@ -93,7 +93,6 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
 @router.post("/google", response_model=GoogleAuthResponse)
 def google_auth(
     payload: GoogleAuthRequest,
-    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
 ):
     result = start_google_auth(payload.access_token, db)
@@ -106,13 +105,17 @@ def google_auth(
         expires_delta=timedelta(minutes=EMAIL_VERIFICATION_EXPIRATION_MINUTES),
     )
     magic_link = f"{FRONTEND_URL.rstrip('/')}/verify-email?magic_token={magic_token}"
-    background_tasks.add_task(
-        send_verification_email,
+    sent = send_verification_email(
         result["recipient_email"],
         result["recipient_name"],
         result["verification_code"],
         magic_link,
     )
+    if not sent:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Nao foi possivel enviar o email de verificacao. Tente novamente em instantes.",
+        )
     return GoogleAuthResponse(
         pending_token=result["pending_token"],
         pending_token_type="bearer",

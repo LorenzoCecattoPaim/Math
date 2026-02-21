@@ -29,14 +29,14 @@ def send_verification_email(
     recipient_name: str | None,
     code: str,
     magic_link: str,
-) -> None:
+) -> bool:
     if not RESEND_API_KEY:
         logger.error("RESEND_API_KEY is missing. Email not sent.")
-        return
+        return False
 
     if not SMTP_FROM_EMAIL:
         logger.error("SMTP_FROM_EMAIL is missing. Email not sent.")
-        return
+        return False
 
     payload = {
         "from": SMTP_FROM_EMAIL,
@@ -60,10 +60,13 @@ def send_verification_email(
             status = getattr(response, "status", 200)
             if status >= 400:
                 logger.error("Resend API returned error status: %s", status)
-                return
+                return False
         logger.info("Verification email sent via Resend API to %s", recipient_email)
+        return True
     except urllib.error.HTTPError as exc:
         error_body = exc.read().decode("utf-8", errors="ignore")
         logger.error("Resend API HTTP error %s: %s", exc.code, error_body)
+        return False
     except Exception as exc:
         logger.exception("Failed sending email via Resend API: %s", str(exc))
+        return False
