@@ -1,7 +1,7 @@
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 const DEFAULT_TIMEOUT_MS = Number(import.meta.env.VITE_API_TIMEOUT_MS ?? 90000);
 const HOTMART_CHECKOUT_URL =
-  import.meta.env.VITE_HOTMART_CHECKOUT_URL || "https://pay.hotmart.com/M104495821K";
+  import.meta.env.VITE_HOTMART_CHECKOUT_URL || "https://provalab-launchpad.vercel.app";
 
 let accessToken: string | null = localStorage.getItem("access_token");
 
