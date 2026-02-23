@@ -24,12 +24,19 @@ def _build_email_body(recipient_name: str | None, code: str, magic_link: str) ->
     )
 
 
-def send_verification_email(
-    recipient_email: str,
-    recipient_name: str | None,
-    code: str,
-    magic_link: str,
-) -> bool:
+def _build_password_reset_email_body(recipient_name: str | None, reset_link: str) -> str:
+    greeting_name = recipient_name or "usuario"
+    return (
+        f"Ola, {greeting_name}!\n\n"
+        "Recebemos uma solicitacao para redefinir sua senha no ProvaLab.\n\n"
+        "Clique no link abaixo para cadastrar uma nova senha:\n\n"
+        f"{reset_link}\n\n"
+        "Este link expira em 15 minutos.\n"
+        "Se voce nao solicitou a redefinicao, ignore este email."
+    )
+
+
+def _send_email(recipient_email: str, subject: str, text_body: str) -> bool:
     if not RESEND_API_KEY:
         logger.error("RESEND_API_KEY is missing. Email not sent.")
         return False
@@ -41,8 +48,8 @@ def send_verification_email(
     payload = {
         "from": SMTP_FROM_EMAIL,
         "to": [recipient_email],
-        "subject": "Confirme seu login - ProvaLab",
-        "text": _build_email_body(recipient_name, code, magic_link),
+        "subject": subject,
+        "text": text_body,
     }
 
     request = urllib.request.Request(
@@ -61,7 +68,7 @@ def send_verification_email(
             if status >= 400:
                 logger.error("Resend API returned error status: %s", status)
                 return False
-        logger.info("Verification email sent via Resend API to %s", recipient_email)
+        logger.info("Email sent via Resend API to %s", recipient_email)
         return True
     except urllib.error.HTTPError as exc:
         error_body = exc.read().decode("utf-8", errors="ignore")
@@ -70,3 +77,28 @@ def send_verification_email(
     except Exception as exc:
         logger.exception("Failed sending email via Resend API: %s", str(exc))
         return False
+
+
+def send_verification_email(
+    recipient_email: str,
+    recipient_name: str | None,
+    code: str,
+    magic_link: str,
+) -> bool:
+    return _send_email(
+        recipient_email=recipient_email,
+        subject="Confirme seu login - ProvaLab",
+        text_body=_build_email_body(recipient_name, code, magic_link),
+    )
+
+
+def send_password_reset_email(
+    recipient_email: str,
+    recipient_name: str | None,
+    reset_link: str,
+) -> bool:
+    return _send_email(
+        recipient_email=recipient_email,
+        subject="Redefinicao de senha - ProvaLab",
+        text_body=_build_password_reset_email_body(recipient_name, reset_link),
+    )

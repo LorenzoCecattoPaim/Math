@@ -82,11 +82,16 @@ async function fetchWithAuth(endpoint: string, options: RequestInit = {}) {
 }
 
 export const authApi = {
-  async signup(email: string, password: string, fullName: string) {
+  async signup(email: string, password: string, confirmPassword: string, fullName: string) {
     const response = await fetchWithTimeout(`${API_BASE_URL}/auth/signup`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password, full_name: fullName }),
+      body: JSON.stringify({
+        email,
+        password,
+        confirm_password: confirmPassword,
+        full_name: fullName,
+      }),
     });
 
     if (!response.ok) {
@@ -168,6 +173,53 @@ export const authApi = {
     const data = await response.json();
     setAccessToken(data.access_token);
     return data;
+  },
+
+  async resendVerificationCode(pendingToken: string) {
+    const response = await fetchWithTimeout(`${API_BASE_URL}/auth/resend-code`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pending_token: pendingToken }),
+    });
+
+    if (!response.ok) {
+      return parseError(response, "Nao foi possivel reenviar o codigo");
+    }
+
+    return response.json() as Promise<{
+      message: string;
+      pending_token?: string;
+      email?: string;
+      code_expires_in_seconds?: number;
+    }>;
+  },
+
+  async forgotPassword(email: string) {
+    const response = await fetchWithTimeout(`${API_BASE_URL}/auth/forgot-password`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+
+    if (!response.ok) {
+      return parseError(response, "Nao foi possivel processar a solicitacao");
+    }
+
+    return response.json() as Promise<{ message: string }>;
+  },
+
+  async resetPassword(token: string, newPassword: string) {
+    const response = await fetchWithTimeout(`${API_BASE_URL}/auth/reset-password`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token, new_password: newPassword }),
+    });
+
+    if (!response.ok) {
+      return parseError(response, "Nao foi possivel redefinir sua senha");
+    }
+
+    return response.json() as Promise<{ message: string }>;
   },
 
   async getMe() {

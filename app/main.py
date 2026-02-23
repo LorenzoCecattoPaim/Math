@@ -1,4 +1,5 @@
 import os
+import logging
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -17,9 +18,28 @@ app = FastAPI(
 
 from fastapi.responses import Response
 
+logger = logging.getLogger(__name__)
+
 @app.options("/{path:path}")
 async def options_handler(path: str):
     return Response(status_code=200)
+
+
+@app.middleware("http")
+async def auth_audit_middleware(request: Request, call_next):
+    response = await call_next(request)
+
+    if request.url.path.startswith("/auth"):
+        client_ip = request.client.host if request.client else "unknown"
+        logger.info(
+            "auth_audit method=%s path=%s status=%s ip=%s",
+            request.method,
+            request.url.path,
+            response.status_code,
+            client_ip,
+        )
+
+    return response
 
 
 @app.exception_handler(FreeLimitReachedError)

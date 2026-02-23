@@ -27,7 +27,12 @@ interface AuthContextType {
   user: User | null;
   profile: Profile | null;
   loading: boolean;
-  signUp: (email: string, password: string, fullName: string) => Promise<{ error: Error | null }>;
+  signUp: (
+    email: string,
+    password: string,
+    confirmPassword: string,
+    fullName: string
+  ) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   startGoogleAuth: (googleAccessToken: string) => Promise<{
     data: PendingGoogleAuth | null;
@@ -84,9 +89,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const signUp = async (email: string, password: string, fullName: string) => {
+  const signUp = async (
+    email: string,
+    password: string,
+    confirmPassword: string,
+    fullName: string
+  ) => {
     try {
-      await authApi.signup(email, password, fullName);
+      await authApi.signup(email, password, confirmPassword, fullName);
       await syncAuthenticatedUser();
       return { error: null };
     } catch (error) {

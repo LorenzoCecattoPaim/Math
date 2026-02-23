@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { authApi } from "@/services/api";
 
 export default function VerifyEmail() {
   const [searchParams] = useSearchParams();
@@ -20,6 +21,10 @@ export default function VerifyEmail() {
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [magicChecking, setMagicChecking] = useState(Boolean(magicToken));
+  const [resendLoading, setResendLoading] = useState(false);
+  const [cooldownSeconds, setCooldownSeconds] = useState(60);
+  const [resendAttempts, setResendAttempts] = useState(0);
+  const [blockedUntil, setBlockedUntil] = useState<number | null>(null);
 
   useEffect(() => {
     if (!magicToken) {
@@ -49,6 +54,92 @@ export default function VerifyEmail() {
 
     void runMagicVerification();
   }, [magicToken, navigate, toast, verifyGoogleMagicLink]);
+
+  useEffect(() => {
+    if (cooldownSeconds <= 0) {
+      return;
+    }
+
+    const timer = window.setInterval(() => {
+      setCooldownSeconds((previous) => Math.max(0, previous - 1));
+    }, 1000);
+
+    return () => window.clearInterval(timer);
+  }, [cooldownSeconds]);
+
+  useEffect(() => {
+    if (!blockedUntil) {
+      return;
+    }
+
+    const now = Date.now();
+    if (now >= blockedUntil) {
+      setBlockedUntil(null);
+      setResendAttempts(0);
+      return;
+    }
+
+    const timer = window.setInterval(() => {
+      if (Date.now() >= blockedUntil) {
+        setBlockedUntil(null);
+        setResendAttempts(0);
+      }
+    }, 1000);
+
+    return () => window.clearInterval(timer);
+  }, [blockedUntil]);
+
+  const blockedSeconds = blockedUntil ? Math.max(0, Math.ceil((blockedUntil - Date.now()) / 1000)) : 0;
+
+  const handleResendCode = async () => {
+    if (!pendingToken) {
+      toast({
+        variant: "destructive",
+        title: "Sessao de verificacao invalida",
+        description: "Inicie o login com Google novamente.",
+      });
+      return;
+    }
+
+    if (cooldownSeconds > 0 || blockedSeconds > 0) {
+      return;
+    }
+
+    setResendLoading(true);
+    try {
+      const response = await authApi.resendVerificationCode(pendingToken);
+
+      const nextPendingToken = response.pending_token || pendingToken;
+      const params = new URLSearchParams(searchParams);
+      params.set("pending_token", nextPendingToken);
+      if (response.email) {
+        params.set("email", response.email);
+      }
+      navigate(`/verify-email?${params.toString()}`, { replace: true });
+
+      setCooldownSeconds(60);
+      setResendAttempts((previous) => {
+        const nextAttempts = previous + 1;
+        if (nextAttempts >= 5) {
+          setBlockedUntil(Date.now() + 60 * 60 * 1000);
+        }
+        return nextAttempts;
+      });
+
+      toast({
+        title: "Codigo reenviado",
+        description: response.message || "Novo codigo enviado para seu email.",
+      });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Falha ao reenviar",
+        description: (error as Error).message,
+      });
+    } finally {
+      setResendLoading(false);
+    }
+  };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -144,6 +235,32 @@ export default function VerifyEmail() {
                 "Confirmar codigo"
               )}
             </Button>
+
+            <div className="space-y-2">
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                disabled={resendLoading || cooldownSeconds > 0 || blockedSeconds > 0}
+                onClick={handleResendCode}
+              >
+                {resendLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Reenviando...
+                  </>
+                ) : cooldownSeconds > 0 ? (
+                  `Reenviar codigo em ${cooldownSeconds}s`
+                ) : blockedSeconds > 0 ? (
+                  `Reenvio bloqueado por ${blockedSeconds}s`
+                ) : (
+                  "Reenviar codigo"
+                )}
+              </Button>
+              <p className="text-xs text-muted-foreground text-center">
+                Voce pode reenviar ate 5 vezes por hora.
+              </p>
+            </div>
           </form>
         )}
       </div>

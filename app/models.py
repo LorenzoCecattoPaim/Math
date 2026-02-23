@@ -19,6 +19,7 @@ class SubjectType(str, enum.Enum):
     trigonometry = "trigonometry"
     arithmetic = "arithmetic"
 
+
 class User(Base):
     __tablename__ = "users"
     
@@ -40,6 +41,9 @@ class User(Base):
     attempts = relationship("ExerciseAttempt", back_populates="user")
     verification_codes = relationship(
         "EmailVerificationCode", back_populates="user", cascade="all, delete-orphan"
+    )
+    password_reset_tokens = relationship(
+        "PasswordResetToken", back_populates="user", cascade="all, delete-orphan"
     )
 
 class Profile(Base):
@@ -95,8 +99,25 @@ class EmailVerificationCode(Base):
     expires_at = Column(DateTime, nullable=False)
     consumed_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+    request_ip = Column(String(64), nullable=True)
 
     user = relationship("User", back_populates="verification_codes")
+
+
+class PasswordResetToken(Base):
+    __tablename__ = "password_reset_tokens"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    token_hash = Column(String(255), nullable=False, index=True)
+    expires_at = Column(DateTime, nullable=False)
+    used_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    request_ip = Column(String(64), nullable=True)
+
+    user = relationship("User", back_populates="password_reset_tokens")
 
 
 class UserProfile(Base):

@@ -13,6 +13,7 @@ import {
   TrendingUp,
   Target,
   Clock,
+  LifeBuoy,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { attemptsApi } from "@/services/api";
@@ -91,6 +92,12 @@ export default function Dashboard() {
               <Link to="/history">
                 <Button variant="ghost" size="sm">
                   Histórico
+                </Button>
+              </Link>
+              <Link to="/support">
+                <Button variant="ghost" size="sm">
+                  <LifeBuoy className="w-4 h-4 mr-2" />
+                  Suporte
                 </Button>
               </Link>
               <Button variant="ghost" size="sm" onClick={handleSignOut}>

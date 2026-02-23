@@ -13,7 +13,11 @@ export default function Register() {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const passwordMinLength = 6;
+  const passwordTooShort = password.length > 0 && password.length < passwordMinLength;
+  const passwordsDoNotMatch = confirmPassword.length > 0 && password !== confirmPassword;
 
   const { signUp, startGoogleAuth } = useAuth();
   const navigate = useNavigate();
@@ -58,17 +62,27 @@ export default function Register() {
     e.preventDefault();
     setLoading(true);
 
-    if (password.length < 6) {
+    if (password.length < passwordMinLength) {
       toast({
         variant: "destructive",
         title: "Senha muito curta",
-        description: "A senha deve ter pelo menos 6 caracteres.",
+        description: `A senha deve ter pelo menos ${passwordMinLength} caracteres.`,
       });
       setLoading(false);
       return;
     }
 
-    const { error } = await signUp(email, password, fullName);
+    if (password !== confirmPassword) {
+      toast({
+        variant: "destructive",
+        title: "Senhas diferentes",
+        description: "Senha e confirmacao precisam ser identicas.",
+      });
+      setLoading(false);
+      return;
+    }
+
+    const { error } = await signUp(email, password, confirmPassword, fullName);
 
     if (error) {
       toast({
@@ -161,10 +175,32 @@ export default function Register() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                minLength={6}
+                minLength={passwordMinLength}
                 className="h-12"
               />
-              <p className="text-xs text-muted-foreground">Minimo de 6 caracteres</p>
+              <p className={passwordTooShort ? "text-xs text-destructive" : "text-xs text-muted-foreground"}>
+                Minimo de {passwordMinLength} caracteres
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">Confirmar senha</Label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                autoComplete="new-password"
+                placeholder="........"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                minLength={passwordMinLength}
+                className="h-12"
+              />
+              {passwordsDoNotMatch ? (
+                <p className="text-xs text-destructive">As senhas nao coincidem.</p>
+              ) : (
+                <p className="text-xs text-muted-foreground">Repita a mesma senha.</p>
+              )}
             </div>
 
             <Button
@@ -172,7 +208,7 @@ export default function Register() {
               variant="hero"
               className="w-full"
               size="lg"
-              disabled={loading}
+              disabled={loading || passwordTooShort || passwordsDoNotMatch}
             >
               {loading ? (
                 <>

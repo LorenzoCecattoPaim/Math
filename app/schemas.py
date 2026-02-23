@@ -10,6 +10,7 @@ from datetime import datetime
 class UserCreate(BaseModel):
     email: EmailStr
     password: str
+    confirm_password: str
     full_name: Optional[str] = None
 
 class UserLogin(BaseModel):
@@ -51,6 +52,34 @@ class VerifyEmailCodeRequest(BaseModel):
 
 class VerifyEmailLinkRequest(BaseModel):
     magic_token: str
+
+
+class ResendVerificationCodeRequest(BaseModel):
+    pending_token: str
+
+
+class ResendVerificationCodeResponse(BaseModel):
+    message: str
+    pending_token: Optional[str] = None
+    email: Optional[str] = None
+    code_expires_in_seconds: Optional[int] = None
+
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+
+class ForgotPasswordResponse(BaseModel):
+    message: str
+
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str
+
+
+class ResetPasswordResponse(BaseModel):
+    message: str
 
 # ========================
 # Profile Schemas

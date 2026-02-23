@@ -1,16 +1,22 @@
 from datetime import timedelta
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
 from app.auth import create_access_token, get_current_user, hash_password, verify_password
-from app.config import EMAIL_VERIFICATION_EXPIRATION_MINUTES, FRONTEND_URL
+from app.config import EMAIL_VERIFICATION_EXPIRATION_MINUTES, FRONTEND_URL, PASSWORD_MIN_LENGTH
 from app.database import get_db
 from app.models import Profile, User
 from app.schemas import (
+    ForgotPasswordRequest,
+    ForgotPasswordResponse,
     GoogleAuthRequest,
     GoogleAuthResponse,
+    ResendVerificationCodeRequest,
+    ResendVerificationCodeResponse,
+    ResetPasswordRequest,
+    ResetPasswordResponse,
     TokenResponse,
     UserCreate,
     UserResponse,
@@ -18,6 +24,9 @@ from app.schemas import (
     VerifyEmailLinkRequest,
 )
 from app.services.auth_service import (
+    request_password_reset,
+    resend_email_code,
+    reset_password,
     start_google_auth,
     verify_email_code_and_issue_token,
     verify_email_magic_link_and_issue_token,
@@ -36,6 +45,18 @@ def signup(user_data: UserCreate, db: Session = Depends(get_db)):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Email ja cadastrado",
+        )
+
+    if user_data.password != user_data.confirm_password:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Senha e confirmacao de senha devem ser iguais.",
+        )
+
+    if len(user_data.password) < PASSWORD_MIN_LENGTH:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"A senha deve ter pelo menos {PASSWORD_MIN_LENGTH} caracteres.",
         )
 
     new_user = User(
@@ -93,9 +114,10 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
 @router.post("/google", response_model=GoogleAuthResponse)
 def google_auth(
     payload: GoogleAuthRequest,
+    request: Request,
     db: Session = Depends(get_db),
 ):
-    result = start_google_auth(payload.access_token, db)
+    result = start_google_auth(payload.access_token, db, request.client.host if request.client else None)
     magic_token = create_access_token(
         data={
             "sub": result["user_id"],
@@ -125,6 +147,20 @@ def google_auth(
     )
 
 
+@router.post("/resend-code", response_model=ResendVerificationCodeResponse)
+def resend_code(
+    payload: ResendVerificationCodeRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    response = resend_email_code(
+        pending_token=payload.pending_token,
+        db=db,
+        request_ip=request.client.host if request.client else None,
+    )
+    return ResendVerificationCodeResponse(**response)
+
+
 @router.post("/verify-email-code", response_model=TokenResponse)
 def verify_email_code(payload: VerifyEmailCodeRequest, db: Session = Depends(get_db)):
     access_token = verify_email_code_and_issue_token(
@@ -139,6 +175,26 @@ def verify_email_code(payload: VerifyEmailCodeRequest, db: Session = Depends(get
 def verify_email_link(payload: VerifyEmailLinkRequest, db: Session = Depends(get_db)):
     access_token = verify_email_magic_link_and_issue_token(payload.magic_token, db)
     return TokenResponse(access_token=access_token)
+
+
+@router.post("/forgot-password", response_model=ForgotPasswordResponse)
+def forgot_password(
+    payload: ForgotPasswordRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    message = request_password_reset(
+        email=payload.email,
+        db=db,
+        request_ip=request.client.host if request.client else None,
+    )
+    return ForgotPasswordResponse(message=message)
+
+
+@router.post("/reset-password", response_model=ResetPasswordResponse)
+def reset_password_endpoint(payload: ResetPasswordRequest, db: Session = Depends(get_db)):
+    message = reset_password(payload.token, payload.new_password, db)
+    return ResetPasswordResponse(message=message)
 
 
 @router.get("/me", response_model=UserResponse)

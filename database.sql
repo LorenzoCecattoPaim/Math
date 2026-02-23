@@ -78,7 +78,21 @@ CREATE TABLE IF NOT EXISTS public.email_verification_codes (
     attempts_count INTEGER NOT NULL DEFAULT 0,
     expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
     consumed_at TIMESTAMP WITH TIME ZONE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    request_ip VARCHAR(64)
+);
+
+-- ============================================
+-- Tabela de Tokens de Redefinicao de Senha
+-- ============================================
+CREATE TABLE IF NOT EXISTS public.password_reset_tokens (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+    token_hash VARCHAR(255) NOT NULL,
+    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    used_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    request_ip VARCHAR(64)
 );
 
 -- ============================================
@@ -111,6 +125,7 @@ ALTER TABLE public.users_profile ADD COLUMN IF NOT EXISTS uses_count INTEGER NOT
 ALTER TABLE public.users_profile ADD COLUMN IF NOT EXISTS hotmart_purchase_id TEXT;
 ALTER TABLE public.users_profile ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
 ALTER TABLE public.users_profile ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
+ALTER TABLE public.email_verification_codes ADD COLUMN IF NOT EXISTS request_ip VARCHAR(64);
 
 -- ============================================
 -- Índices para Performance
@@ -124,9 +139,13 @@ CREATE INDEX IF NOT EXISTS idx_attempts_exercise_id ON public.exercise_attempts(
 CREATE INDEX IF NOT EXISTS idx_users_google_id ON public.users(google_id);
 CREATE INDEX IF NOT EXISTS idx_verification_codes_user_id ON public.email_verification_codes(user_id);
 CREATE INDEX IF NOT EXISTS idx_verification_codes_expires_at ON public.email_verification_codes(expires_at);
+CREATE INDEX IF NOT EXISTS idx_verification_codes_request_ip ON public.email_verification_codes(request_ip);
 CREATE INDEX IF NOT EXISTS idx_users_profile_email ON public.users_profile(email);
 CREATE INDEX IF NOT EXISTS idx_users_profile_plan ON public.users_profile(plan);
-
+CREATE INDEX IF NOT EXISTS idx_password_reset_user_id ON public.password_reset_tokens(user_id);
+CREATE INDEX IF NOT EXISTS idx_password_reset_token_hash ON public.password_reset_tokens(token_hash);
+CREATE INDEX IF NOT EXISTS idx_password_reset_expires_at ON public.password_reset_tokens(expires_at);
+CREATE INDEX IF NOT EXISTS idx_password_reset_request_ip ON public.password_reset_tokens(request_ip);
 -- ============================================
 -- Trigger para Atualizar updated_at
 -- ============================================
