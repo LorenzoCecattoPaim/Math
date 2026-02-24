@@ -5,7 +5,7 @@ import urllib.request
 
 from app.config import (
     RESEND_API_KEY,
-    SMTP_FROM_EMAIL,
+    RESEND_FROM_EMAIL,
 )
 
 logger = logging.getLogger(__name__)
@@ -41,12 +41,20 @@ def _send_email(recipient_email: str, subject: str, text_body: str) -> bool:
         logger.error("RESEND_API_KEY is missing. Email not sent.")
         return False
 
-    if not SMTP_FROM_EMAIL:
-        logger.error("SMTP_FROM_EMAIL is missing. Email not sent.")
+    if not RESEND_FROM_EMAIL:
+        logger.error("RESEND_FROM_EMAIL is missing. Email not sent.")
+        return False
+
+    from_email = RESEND_FROM_EMAIL.strip()
+    if "@" not in from_email:
+        logger.error(
+            "RESEND_FROM_EMAIL is invalid: '%s'. Expected a valid sender address.",
+            RESEND_FROM_EMAIL,
+        )
         return False
 
     payload = {
-        "from": SMTP_FROM_EMAIL,
+        "from": from_email,
         "to": [recipient_email],
         "subject": subject,
         "text": text_body,
