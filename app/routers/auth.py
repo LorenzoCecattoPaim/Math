@@ -24,6 +24,7 @@ from app.schemas import (
     VerifyEmailLinkRequest,
 )
 from app.services.auth_service import (
+    issue_email_verification_challenge,
     request_password_reset,
     resend_email_code,
     reset_password,
@@ -37,15 +38,11 @@ from app.services.plan_service import ensure_user_plan_profile
 router = APIRouter(prefix="/auth", tags=["Autenticacao"])
 
 
-@router.post("/signup", response_model=TokenResponse)
-def signup(user_data: UserCreate, db: Session = Depends(get_db)):
-    """Registrar novo usuario com email/senha."""
-    existing_user = db.query(User).filter(User.email == user_data.email).first()
-    if existing_user:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email ja cadastrado",
-        )
+@router.post("/signup", response_model=GoogleAuthResponse)
+def signup(user_data: UserCreate, request: Request, db: Session = Depends(get_db)):
+    """Registrar novo usuario com email/senha e exigir verificacao por email."""
+    normalized_email = user_data.email.strip().lower()
+    existing_user = db.query(User).filter(User.email == normalized_email).first()
 
     if user_data.password != user_data.confirm_password:
         raise HTTPException(
@@ -59,22 +56,77 @@ def signup(user_data: UserCreate, db: Session = Depends(get_db)):
             detail=f"A senha deve ter pelo menos {PASSWORD_MIN_LENGTH} caracteres.",
         )
 
-    new_user = User(
-        email=user_data.email,
-        full_name=user_data.full_name,
-        password_hash=hash_password(user_data.password),
-        email_verified=True,
+    if existing_user:
+        if existing_user.email_verified:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email ja cadastrado",
+            )
+
+        if not existing_user.password_hash:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Conta vinculada ao Google. Use 'Continuar com Google'.",
+            )
+
+        if not verify_password(user_data.password, existing_user.password_hash):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email ja cadastrado. Use a senha da conta para reenviar a verificacao.",
+            )
+
+        if user_data.full_name and not existing_user.full_name:
+            existing_user.full_name = user_data.full_name
+            db.commit()
+    else:
+        existing_user = User(
+            email=normalized_email,
+            full_name=user_data.full_name,
+            password_hash=hash_password(user_data.password),
+            email_verified=False,
+        )
+        db.add(existing_user)
+        db.commit()
+        db.refresh(existing_user)
+
+    if not existing_user.profile:
+        db.add(Profile(user_id=existing_user.id, full_name=user_data.full_name or existing_user.full_name))
+    ensure_user_plan_profile(existing_user)
+    db.commit()
+
+    result = issue_email_verification_challenge(
+        user=existing_user,
+        db=db,
+        request_ip=request.client.host if request.client else None,
     )
-    db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
+    magic_token = create_access_token(
+        data={
+            "sub": result["user_id"],
+            "scope": "email_magic_link",
+            "verification_code_id": result["verification_code_id"],
+        },
+        expires_delta=timedelta(minutes=EMAIL_VERIFICATION_EXPIRATION_MINUTES),
+    )
+    magic_link = f"{FRONTEND_URL.rstrip('/')}/verify-email?magic_token={magic_token}"
+    sent = send_verification_email(
+        result["recipient_email"],
+        result["recipient_name"],
+        result["verification_code"],
+        magic_link,
+    )
+    if not sent:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Nao foi possivel enviar o email de verificacao. Tente novamente em instantes.",
+        )
 
-    db.add(Profile(user_id=new_user.id, full_name=user_data.full_name))
-    ensure_user_plan_profile(new_user)
-    db.commit()
-
-    access_token = create_access_token(data={"sub": str(new_user.id)})
-    return TokenResponse(access_token=access_token)
+    return GoogleAuthResponse(
+        pending_token=result["pending_token"],
+        pending_token_type="bearer",
+        verification_required=True,
+        email=result["email"],
+        code_expires_in_seconds=result["code_expires_in_seconds"],
+    )
 
 
 @router.post("/login", response_model=TokenResponse)

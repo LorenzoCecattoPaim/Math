@@ -126,6 +126,7 @@ ALTER TABLE public.users_profile ADD COLUMN IF NOT EXISTS hotmart_purchase_id TE
 ALTER TABLE public.users_profile ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
 ALTER TABLE public.users_profile ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
 ALTER TABLE public.email_verification_codes ADD COLUMN IF NOT EXISTS request_ip VARCHAR(64);
+ALTER TABLE public.password_reset_tokens ADD COLUMN IF NOT EXISTS request_ip VARCHAR(64);
 
 -- ============================================
 -- Índices para Performance

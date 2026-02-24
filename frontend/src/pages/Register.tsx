@@ -82,20 +82,24 @@ export default function Register() {
       return;
     }
 
-    const { error } = await signUp(email, password, confirmPassword, fullName);
+    const { data, error } = await signUp(email, password, confirmPassword, fullName);
 
-    if (error) {
+    if (error || !data) {
       toast({
         variant: "destructive",
         title: "Erro ao criar conta",
-        description: error.message,
+        description: error?.message || "Nao foi possivel iniciar a verificacao por email.",
       });
     } else {
       toast({
-        title: "Conta criada com sucesso!",
-        description: "Bem-vindo ao ProvaLab!",
+        title: "Conta criada. Verifique seu email",
+        description: `Enviamos um codigo para ${data.email}.`,
       });
-      navigate("/dashboard");
+      const params = new URLSearchParams({
+        pending_token: data.pendingToken,
+        email: data.email,
+      });
+      navigate(`/verify-email?${params.toString()}`);
     }
 
     setLoading(false);

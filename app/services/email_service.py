@@ -66,6 +66,7 @@ def _send_email(recipient_email: str, subject: str, text_body: str) -> bool:
         headers={
             "Authorization": f"Bearer {RESEND_API_KEY}",
             "Content-Type": "application/json",
+            "User-Agent": "ProvaLabMailer/1.0 (+https://provalab.com.br)",
         },
         method="POST",
     )

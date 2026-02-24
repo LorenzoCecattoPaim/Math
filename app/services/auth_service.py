@@ -232,6 +232,29 @@ def _create_email_verification_code(
     return verification, raw_code
 
 
+def issue_email_verification_challenge(
+    user: User,
+    db: Session,
+    request_ip: str | None = None,
+) -> dict:
+    verification, raw_code = _create_email_verification_code(
+        db=db,
+        user=user,
+        request_ip=request_ip,
+    )
+    pending_token = _create_pending_token(user.id, verification.id)
+    return {
+        "pending_token": pending_token,
+        "email": user.email,
+        "code_expires_in_seconds": EMAIL_VERIFICATION_EXPIRATION_MINUTES * 60,
+        "recipient_email": user.email,
+        "recipient_name": user.full_name,
+        "verification_code": raw_code,
+        "verification_code_id": str(verification.id),
+        "user_id": str(user.id),
+    }
+
+
 def _validate_google_access_token(access_token: str) -> dict:
     tokeninfo_url = (
         "https://oauth2.googleapis.com/tokeninfo?"
@@ -333,23 +356,7 @@ def start_google_auth(access_token: str, db: Session, request_ip: str | None = N
         ensure_user_plan_profile(user)
         db.commit()
 
-    verification, raw_code = _create_email_verification_code(
-        db=db,
-        user=user,
-        request_ip=request_ip,
-    )
-    pending_token = _create_pending_token(user.id, verification.id)
-
-    return {
-        "pending_token": pending_token,
-        "email": user.email,
-        "code_expires_in_seconds": EMAIL_VERIFICATION_EXPIRATION_MINUTES * 60,
-        "recipient_email": user.email,
-        "recipient_name": user.full_name,
-        "verification_code": raw_code,
-        "verification_code_id": str(verification.id),
-        "user_id": str(user.id),
-    }
+    return issue_email_verification_challenge(user=user, db=db, request_ip=request_ip)
 
 
 def resend_email_code(pending_token: str, db: Session, request_ip: str | None = None) -> dict:

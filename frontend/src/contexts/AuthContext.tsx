@@ -32,7 +32,7 @@ interface AuthContextType {
     password: string,
     confirmPassword: string,
     fullName: string
-  ) => Promise<{ error: Error | null }>;
+  ) => Promise<{ data: PendingGoogleAuth | null; error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   startGoogleAuth: (googleAccessToken: string) => Promise<{
     data: PendingGoogleAuth | null;
@@ -96,11 +96,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     fullName: string
   ) => {
     try {
-      await authApi.signup(email, password, confirmPassword, fullName);
-      await syncAuthenticatedUser();
-      return { error: null };
+      const response = await authApi.signup(email, password, confirmPassword, fullName);
+      return {
+        data: {
+          pendingToken: response.pending_token,
+          email: response.email,
+          expiresInSeconds: response.code_expires_in_seconds,
+        },
+        error: null,
+      };
     } catch (error) {
-      return { error: error as Error };
+      return { data: null, error: error as Error };
     }
   };
 
