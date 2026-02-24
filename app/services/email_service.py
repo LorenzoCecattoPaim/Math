@@ -2,6 +2,7 @@ import json
 import logging
 import urllib.error
 import urllib.request
+from email.utils import formataddr, parseaddr
 
 from app.config import (
     RESEND_API_KEY,
@@ -45,8 +46,11 @@ def _send_email(recipient_email: str, subject: str, text_body: str) -> bool:
         logger.error("RESEND_FROM_EMAIL is missing. Email not sent.")
         return False
 
-    from_email = RESEND_FROM_EMAIL.strip()
-    if "@" not in from_email:
+    raw_from = RESEND_FROM_EMAIL.strip().strip("\"'")
+    display_name, parsed_email = parseaddr(raw_from)
+    normalized_from = formataddr((display_name, parsed_email)) if parsed_email else ""
+
+    if "@" not in parsed_email:
         logger.error(
             "RESEND_FROM_EMAIL is invalid: '%s'. Expected a valid sender address.",
             RESEND_FROM_EMAIL,
@@ -54,7 +58,7 @@ def _send_email(recipient_email: str, subject: str, text_body: str) -> bool:
         return False
 
     payload = {
-        "from": from_email,
+        "from": normalized_from,
         "to": [recipient_email],
         "subject": subject,
         "text": text_body,
