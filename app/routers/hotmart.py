@@ -100,5 +100,8 @@ async def hotmart_webhook(
         db.add(user)
         db.commit()
         return {"status": "ok", "event": event_name, "processed": True}
+    except Exception:
+        db.rollback()
+        raise
     finally:
         db.close()
