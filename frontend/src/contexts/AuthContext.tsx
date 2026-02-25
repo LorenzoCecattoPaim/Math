@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { authApi, profileApi, getAccessToken, setAccessToken } from "@/services/api";
 
 interface User {
@@ -32,7 +32,7 @@ interface AuthContextType {
     password: string,
     confirmPassword: string,
     fullName: string
-  ) => Promise<{ data: PendingGoogleAuth | null; error: Error | null }>;
+  ) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   startGoogleAuth: (googleAccessToken: string) => Promise<{
     data: PendingGoogleAuth | null;
@@ -53,64 +53,69 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      const token = getAccessToken();
-      if (token) {
-        try {
-          const userData = await authApi.getMe();
-          setUser(userData);
+  const syncAuthenticatedUser = useCallback(async () => {
+    const [userResult, profileResult] = await Promise.allSettled([
+      authApi.getMe(),
+      profileApi.getProfile(),
+    ]);
 
-          try {
-            const profileData = await profileApi.getProfile();
-            setProfile(profileData);
-          } catch {
-            setProfile(null);
-          }
-        } catch {
-          setAccessToken(null);
-        }
-      }
-      setLoading(false);
-    };
+    if (userResult.status === "rejected") {
+      throw userResult.reason;
+    }
 
-    checkAuth();
-  }, []);
-
-  const syncAuthenticatedUser = async () => {
-    const userData = await authApi.getMe();
-    setUser(userData);
-
-    try {
-      const profileData = await profileApi.getProfile();
-      setProfile(profileData);
-    } catch {
+    setUser(userResult.value);
+    if (profileResult.status === "fulfilled") {
+      setProfile(profileResult.value);
+    } else {
       setProfile(null);
     }
-  };
+  }, []);
 
-  const signUp = async (
+  useEffect(() => {
+    let isMounted = true;
+
+    const checkAuth = async () => {
+      const token = getAccessToken();
+      if (!token) {
+        if (isMounted) {
+          setLoading(false);
+        }
+        return;
+      }
+
+      try {
+        await syncAuthenticatedUser();
+      } catch {
+        setAccessToken(null);
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    void checkAuth();
+    return () => {
+      isMounted = false;
+    };
+  }, [syncAuthenticatedUser]);
+
+  const signUp = useCallback(async (
     email: string,
     password: string,
     confirmPassword: string,
     fullName: string
   ) => {
     try {
-      const response = await authApi.signup(email, password, confirmPassword, fullName);
-      return {
-        data: {
-          pendingToken: response.pending_token,
-          email: response.email,
-          expiresInSeconds: response.code_expires_in_seconds,
-        },
-        error: null,
-      };
+      await authApi.signup(email, password, confirmPassword, fullName);
+      await syncAuthenticatedUser();
+      return { error: null };
     } catch (error) {
-      return { data: null, error: error as Error };
+      return { error: error as Error };
     }
-  };
+  }, [syncAuthenticatedUser]);
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = useCallback(async (email: string, password: string) => {
     try {
       await authApi.login(email, password);
       await syncAuthenticatedUser();
@@ -118,9 +123,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       return { error: error as Error };
     }
-  };
+  }, [syncAuthenticatedUser]);
 
-  const startGoogleAuth = async (googleAccessToken: string) => {
+  const startGoogleAuth = useCallback(async (googleAccessToken: string) => {
     try {
       const response = await authApi.googleAuth(googleAccessToken);
       return {
@@ -134,48 +139,61 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       return { data: null, error: error as Error };
     }
-  };
+  }, []);
 
-  const verifyGoogleEmailCode = async (pendingToken: string, code: string) => {
+  const verifyGoogleEmailCode = useCallback(async (pendingToken: string, code: string) => {
     try {
       await authApi.verifyEmailCode(pendingToken, code);
-      void syncAuthenticatedUser();
+      await syncAuthenticatedUser();
       return { error: null };
     } catch (error) {
       return { error: error as Error };
     }
-  };
+  }, [syncAuthenticatedUser]);
 
-  const verifyGoogleMagicLink = async (magicToken: string) => {
+  const verifyGoogleMagicLink = useCallback(async (magicToken: string) => {
     try {
       await authApi.verifyEmailMagicLink(magicToken);
-      void syncAuthenticatedUser();
+      await syncAuthenticatedUser();
       return { error: null };
     } catch (error) {
       return { error: error as Error };
     }
-  };
+  }, [syncAuthenticatedUser]);
 
-  const signOut = async () => {
+  const signOut = useCallback(async () => {
     authApi.logout();
     setUser(null);
     setProfile(null);
-  };
+  }, []);
+
+  const contextValue = useMemo(
+    () => ({
+      user,
+      profile,
+      loading,
+      signUp,
+      signIn,
+      startGoogleAuth,
+      verifyGoogleEmailCode,
+      verifyGoogleMagicLink,
+      signOut,
+    }),
+    [
+      user,
+      profile,
+      loading,
+      signUp,
+      signIn,
+      startGoogleAuth,
+      verifyGoogleEmailCode,
+      verifyGoogleMagicLink,
+      signOut,
+    ]
+  );
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        profile,
-        loading,
-        signUp,
-        signIn,
-        startGoogleAuth,
-        verifyGoogleEmailCode,
-        verifyGoogleMagicLink,
-        signOut,
-      }}
-    >
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );

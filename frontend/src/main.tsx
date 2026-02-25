@@ -7,9 +7,16 @@ import { Toaster } from "@/components/ui/toaster";
 import App from "./App";
 import "./index.css";
 
-const queryClient = new QueryClient();
-
-console.log("VITE_API_URL =", import.meta.env.VITE_API_URL);
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 30_000,
+      gcTime: 5 * 60_000,
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>

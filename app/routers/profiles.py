@@ -51,8 +51,10 @@ def get_my_plan(
     current_user: User = Depends(get_current_user)
 ):
     """Obter status do plano e consumo do usuario autenticado"""
+    had_plan_profile = current_user.plan_profile is not None
     plan_profile = ensure_user_plan_profile(current_user)
-    db.add(current_user)
-    db.commit()
-    db.refresh(plan_profile)
+    if (not had_plan_profile) or db.is_modified(plan_profile):
+        db.add(current_user)
+        db.commit()
+        db.refresh(plan_profile)
     return plan_profile

@@ -1,22 +1,38 @@
-import { Routes, Route } from "react-router-dom";
+import { lazy, Suspense } from "react";
+import { Route, Routes } from "react-router-dom";
+import { Loader2 } from "lucide-react";
+
 import { ProtectedRoute } from "@/components/ProtectedRoute";
-import Landing from "@/pages/Landing";
-import Login from "@/pages/Login";
-import Register from "@/pages/Register";
-import ForgotPassword from "@/pages/ForgotPassword";
-import ResetPassword from "@/pages/ResetPassword";
-import Dashboard from "@/pages/Dashboard";
-import Practice from "@/pages/Practice";
-import History from "@/pages/History";
-import Progress from "@/pages/Progress";
-import VerifyEmail from "@/pages/VerifyEmail";
-import NotFound from "@/pages/NotFound";
-import Support from "@/pages/Support";
-import { SupportFloatingButton } from "@/components/SupportFloatingButton";
+
+const Landing = lazy(() => import("@/pages/Landing"));
+const Login = lazy(() => import("@/pages/Login"));
+const Register = lazy(() => import("@/pages/Register"));
+const ForgotPassword = lazy(() => import("@/pages/ForgotPassword"));
+const ResetPassword = lazy(() => import("@/pages/ResetPassword"));
+const Dashboard = lazy(() => import("@/pages/Dashboard"));
+const Practice = lazy(() => import("@/pages/Practice"));
+const History = lazy(() => import("@/pages/History"));
+const Progress = lazy(() => import("@/pages/Progress"));
+const VerifyEmail = lazy(() => import("@/pages/VerifyEmail"));
+const NotFound = lazy(() => import("@/pages/NotFound"));
+const Support = lazy(() => import("@/pages/Support"));
+const SupportFloatingButton = lazy(() =>
+  import("@/components/SupportFloatingButton").then((module) => ({
+    default: module.SupportFloatingButton,
+  }))
+);
+
+function RouteFallback() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <Loader2 className="w-8 h-8 animate-spin text-primary" />
+    </div>
+  );
+}
 
 function App() {
   return (
-    <>
+    <Suspense fallback={<RouteFallback />}>
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
@@ -67,7 +83,7 @@ function App() {
         <Route path="*" element={<NotFound />} />
       </Routes>
       <SupportFloatingButton />
-    </>
+    </Suspense>
   );
 }
 

@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-from sqlalchemy import Column, String, Text, DateTime, ForeignKey, Boolean, Integer, Enum as SQLEnum, JSON
+from sqlalchemy import Column, String, Text, DateTime, ForeignKey, Boolean, Integer, Enum as SQLEnum, JSON, Index
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from app.database import Base
@@ -60,6 +60,10 @@ class Profile(Base):
 
 class Exercise(Base):
     __tablename__ = "exercises"
+    __table_args__ = (
+        Index("idx_exercises_subject_difficulty", "subject", "difficulty"),
+        Index("idx_exercises_subject_difficulty_created_at", "subject", "difficulty", "created_at"),
+    )
     
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     question = Column(Text, nullable=False)
@@ -74,6 +78,9 @@ class Exercise(Base):
 
 class ExerciseAttempt(Base):
     __tablename__ = "exercise_attempts"
+    __table_args__ = (
+        Index("idx_attempts_user_created_at", "user_id", "created_at"),
+    )
     
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)

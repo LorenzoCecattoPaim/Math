@@ -54,7 +54,7 @@ export default function Dashboard() {
   const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
 
-  const { data: stats } = useQuery({
+  const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ["user-stats", user?.id],
     queryFn: async () => {
       try {
@@ -64,6 +64,7 @@ export default function Dashboard() {
       }
     },
     enabled: !!user,
+    staleTime: 30_000,
   });
 
   const handleSignOut = async () => {
@@ -126,7 +127,9 @@ export default function Dashboard() {
                 <Target className="w-6 h-6 text-primary" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{stats?.total || 0}</p>
+                <p className="text-2xl font-bold">
+                  {statsLoading ? "..." : stats?.total || 0}
+                </p>
                 <p className="text-sm text-muted-foreground">Exercícios feitos</p>
               </div>
             </div>
@@ -138,7 +141,9 @@ export default function Dashboard() {
                 <TrendingUp className="w-6 h-6 text-success" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{stats?.accuracy || 0}%</p>
+                <p className="text-2xl font-bold">
+                  {statsLoading ? "..." : `${stats?.accuracy || 0}%`}
+                </p>
                 <p className="text-sm text-muted-foreground">Taxa de acerto</p>
               </div>
             </div>
@@ -150,7 +155,9 @@ export default function Dashboard() {
                 <Clock className="w-6 h-6 text-accent" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{stats?.correct || 0}</p>
+                <p className="text-2xl font-bold">
+                  {statsLoading ? "..." : stats?.correct || 0}
+                </p>
                 <p className="text-sm text-muted-foreground">Respostas corretas</p>
               </div>
             </div>

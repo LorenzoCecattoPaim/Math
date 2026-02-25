@@ -16,20 +16,26 @@ def check_plan_limit(
         db: Session = Depends(get_db),
         current_user: User = Depends(get_current_user),
     ) -> User:
+        had_plan_profile = current_user.plan_profile is not None
         plan_profile = ensure_user_plan_profile(current_user)
 
         if plan_profile.plan == "premium":
-            db.add(current_user)
-            db.commit()
+            if not had_plan_profile:
+                db.add(current_user)
+                db.commit()
             return current_user
 
         if plan_profile.uses_count >= plan_profile.free_uses:
-            db.add(current_user)
-            db.commit()
+            if not had_plan_profile:
+                db.add(current_user)
+                db.commit()
             raise FreeLimitReachedError(checkout_url=HOTMART_CHECKOUT_URL)
 
         if increment_use:
             plan_profile.uses_count += 1
+            db.add(current_user)
+            db.commit()
+        elif not had_plan_profile:
             db.add(current_user)
             db.commit()
 

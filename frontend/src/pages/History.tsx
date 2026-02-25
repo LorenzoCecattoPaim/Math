@@ -34,6 +34,7 @@ export default function History() {
       }
     },
     enabled: !!user,
+    staleTime: 30_000,
   });
 
   return (

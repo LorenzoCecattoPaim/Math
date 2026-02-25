@@ -82,24 +82,20 @@ export default function Register() {
       return;
     }
 
-    const { data, error } = await signUp(email, password, confirmPassword, fullName);
+    const { error } = await signUp(email, password, confirmPassword, fullName);
 
-    if (error || !data) {
+    if (error) {
       toast({
         variant: "destructive",
         title: "Erro ao criar conta",
-        description: error?.message || "Nao foi possivel iniciar a verificacao por email.",
+        description: error.message || "Nao foi possivel criar sua conta.",
       });
     } else {
       toast({
-        title: "Conta criada. Verifique seu email",
-        description: `Enviamos um codigo para ${data.email}.`,
+        title: "Conta criada com sucesso",
+        description: "Voce ja pode acessar sua conta.",
       });
-      const params = new URLSearchParams({
-        pending_token: data.pendingToken,
-        email: data.email,
-      });
-      navigate(`/verify-email?${params.toString()}`);
+      navigate("/dashboard");
     }
 
     setLoading(false);

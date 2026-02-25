@@ -1,5 +1,6 @@
 from typing import List
 from fastapi import APIRouter, Depends, Query
+from sqlalchemy import case, func
 from sqlalchemy.orm import Session, joinedload
 from app.database import get_db
 from app.models import ExerciseAttempt, User
@@ -10,7 +11,7 @@ router = APIRouter(prefix="/attempts", tags=["Tentativas"])
 
 @router.get("", response_model=List[AttemptResponse])
 def get_attempts(
-    limit: int = Query(50, description="Limite de resultados"),
+    limit: int = Query(50, ge=1, le=200, description="Limite de resultados"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -31,12 +32,17 @@ def get_stats(
     current_user: User = Depends(get_current_user)
 ):
     """Obter estatísticas do usuário"""
-    attempts = db.query(ExerciseAttempt).filter(
-        ExerciseAttempt.user_id == current_user.id
-    ).all()
-    
-    total = len(attempts)
-    correct = sum(1 for a in attempts if a.is_correct)
+    total, correct = (
+        db.query(
+            func.count(ExerciseAttempt.id),
+            func.coalesce(
+                func.sum(case((ExerciseAttempt.is_correct.is_(True), 1), else_=0)),
+                0,
+            ),
+        )
+        .filter(ExerciseAttempt.user_id == current_user.id)
+        .one()
+    )
     accuracy = round((correct / total * 100)) if total > 0 else 0
     
     return StatsResponse(total=total, correct=correct, accuracy=accuracy)
@@ -55,8 +61,17 @@ def get_progress(
         ExerciseAttempt.created_at.desc()
     ).limit(100).all()
     
-    total = len(attempts)
-    correct = sum(1 for a in attempts if a.is_correct)
+    total, correct = (
+        db.query(
+            func.count(ExerciseAttempt.id),
+            func.coalesce(
+                func.sum(case((ExerciseAttempt.is_correct.is_(True), 1), else_=0)),
+                0,
+            ),
+        )
+        .filter(ExerciseAttempt.user_id == current_user.id)
+        .one()
+    )
     accuracy = round((correct / total * 100)) if total > 0 else 0
     
     return ProgressResponse(

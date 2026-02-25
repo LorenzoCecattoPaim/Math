@@ -102,13 +102,12 @@ export const authApi = {
       return parseError(response, "Erro ao criar conta");
     }
 
-    return response.json() as Promise<{
-      pending_token: string;
-      pending_token_type: string;
-      verification_required: boolean;
-      email: string;
-      code_expires_in_seconds: number;
-    }>;
+    const data = await response.json();
+    setAccessToken(data.access_token);
+    return data as {
+      access_token: string;
+      token_type: string;
+    };
   },
 
   async login(email: string, password: string) {

@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
@@ -30,38 +31,41 @@ export default function ProgressPage() {
       }
     },
     enabled: !!user,
+    staleTime: 30_000,
   });
 
   const attempts = progressData?.attempts || [];
   const stats = progressData?.stats || { total: 0, correct: 0, accuracy: 0 };
 
-  const calculateStreak = () => {
+  const streak = useMemo(() => {
     if (!attempts || attempts.length === 0) return 0;
     const today = startOfDay(new Date());
     const uniqueDays = [...new Set(
       attempts.map((a: any) => startOfDay(new Date(a.created_at)).getTime())
     )].sort((a, b) => (b as number) - (a as number));
 
-    let streak = 0;
+    let currentStreak = 0;
     let checkDate = today;
 
     for (const dayTime of uniqueDays) {
-      if (isSameDay(new Date(dayTime as number), checkDate) ||
-          isSameDay(new Date(dayTime as number), subDays(checkDate, 1))) {
-        streak++;
+      if (
+        isSameDay(new Date(dayTime as number), checkDate) ||
+        isSameDay(new Date(dayTime as number), subDays(checkDate, 1))
+      ) {
+        currentStreak++;
         checkDate = new Date(dayTime as number);
       } else {
         break;
       }
     }
-    return streak;
-  };
+    return currentStreak;
+  }, [attempts]);
 
-  const getPerformanceData = () => {
+  const performanceData = useMemo(() => {
     if (!attempts) return [];
     const last14Days = eachDayOfInterval({ start: subDays(new Date(), 13), end: new Date() });
 
-    return last14Days.map(day => {
+    return last14Days.map((day) => {
       const dayAttempts = attempts.filter((a: any) => isSameDay(new Date(a.created_at), day));
       const correct = dayAttempts.filter((a: any) => a.is_correct).length;
       return {
@@ -70,9 +74,9 @@ export default function ProgressPage() {
         acertos: correct,
       };
     });
-  };
+  }, [attempts]);
 
-  const getSubjectData = () => {
+  const subjectData = useMemo(() => {
     if (!attempts) return [];
     const subjectCounts: Record<string, { total: number; correct: number }> = {};
 
@@ -90,11 +94,7 @@ export default function ProgressPage() {
       color: subjectConfig[subject as keyof typeof subjectConfig]?.color || "#ccc",
       percentage: Math.round((data.correct / data.total) * 100),
     }));
-  };
-
-  const streak = calculateStreak();
-  const performanceData = getPerformanceData();
-  const subjectData = getSubjectData();
+  }, [attempts]);
 
   return (
     <div className="min-h-screen bg-background">
