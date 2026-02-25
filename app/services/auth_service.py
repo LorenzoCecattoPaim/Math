@@ -7,7 +7,7 @@ import secrets
 import urllib.error
 import urllib.parse
 import urllib.request
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from uuid import UUID
 
 from fastapi import HTTPException, status
@@ -42,7 +42,14 @@ GENERIC_RESEND_CODE_MESSAGE = (
 
 
 def _utcnow() -> datetime:
-    return datetime.utcnow()
+    return datetime.now(timezone.utc)
+
+
+def _is_expired(expires_at: datetime) -> bool:
+    now = _utcnow()
+    if expires_at.tzinfo is None and now.tzinfo is not None:
+        now = now.replace(tzinfo=None)
+    return expires_at < now
 
 
 def _fetch_json(url: str, headers: dict[str, str] | None = None) -> dict:
@@ -95,7 +102,10 @@ def _create_magic_link(user_id: UUID, verification_code_id: UUID) -> str:
 def _get_retry_after_seconds(last_created_at: datetime | None, cooldown_seconds: int) -> int:
     if last_created_at is None:
         return 0
-    elapsed = int((_utcnow() - last_created_at).total_seconds())
+    now = _utcnow()
+    if last_created_at.tzinfo is None and now.tzinfo is not None:
+        now = now.replace(tzinfo=None)
+    elapsed = int((now - last_created_at).total_seconds())
     return max(0, cooldown_seconds - elapsed)
 
 
@@ -469,7 +479,7 @@ def reset_password(token: str, new_password: str, db: Session) -> str:
         )
         .first()
     )
-    if reset_token is None or reset_token.expires_at < _utcnow():
+    if reset_token is None or _is_expired(reset_token.expires_at):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Token invalido ou expirado.",
@@ -539,7 +549,7 @@ def verify_email_code_and_issue_token(pending_token: str, code: str, db: Session
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Codigo ja utilizado.",
         )
-    if verification.expires_at < _utcnow():
+    if _is_expired(verification.expires_at):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Codigo expirado. Faca login com Google novamente.",
@@ -628,7 +638,7 @@ def verify_email_magic_link_and_issue_token(magic_token: str, db: Session) -> st
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Link ja utilizado.",
         )
-    if verification.expires_at < _utcnow():
+    if _is_expired(verification.expires_at):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Link expirado. Faca login com Google novamente.",

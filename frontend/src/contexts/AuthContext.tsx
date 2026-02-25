@@ -139,7 +139,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const verifyGoogleEmailCode = async (pendingToken: string, code: string) => {
     try {
       await authApi.verifyEmailCode(pendingToken, code);
-      await syncAuthenticatedUser();
+      void syncAuthenticatedUser();
       return { error: null };
     } catch (error) {
       return { error: error as Error };
@@ -149,7 +149,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const verifyGoogleMagicLink = async (magicToken: string) => {
     try {
       await authApi.verifyEmailMagicLink(magicToken);
-      await syncAuthenticatedUser();
+      void syncAuthenticatedUser();
       return { error: null };
     } catch (error) {
       return { error: error as Error };
