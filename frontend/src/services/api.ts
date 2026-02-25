@@ -55,7 +55,11 @@ async function fetchWithTimeout(
   }
 }
 
-async function fetchWithAuth(endpoint: string, options: RequestInit = {}) {
+async function fetchWithAuth(
+  endpoint: string,
+  options: RequestInit = {},
+  timeoutMs = DEFAULT_TIMEOUT_MS
+) {
   const headers: Record<string, string> = {
     ...(options.headers as Record<string, string>),
   };
@@ -71,7 +75,7 @@ async function fetchWithAuth(endpoint: string, options: RequestInit = {}) {
   const response = await fetchWithTimeout(`${API_BASE_URL}${endpoint}`, {
     ...options,
     headers,
-  });
+  }, timeoutMs);
 
   if (response.status === 401) {
     setAccessToken(null);
@@ -152,7 +156,7 @@ export const authApi = {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ pending_token: pendingToken, code }),
-    });
+    }, Math.max(DEFAULT_TIMEOUT_MS, 180000));
 
     if (!response.ok) {
       return parseError(response, "Codigo invalido ou expirado");
@@ -168,7 +172,7 @@ export const authApi = {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ magic_token: magicToken }),
-    }, Math.max(DEFAULT_TIMEOUT_MS, 60000));
+    }, Math.max(DEFAULT_TIMEOUT_MS, 180000));
 
     if (!response.ok) {
       return parseError(response, "Link de verificacao invalido ou expirado");
@@ -227,7 +231,7 @@ export const authApi = {
   },
 
   async getMe() {
-    const response = await fetchWithAuth("/auth/me");
+    const response = await fetchWithAuth("/auth/me", {}, Math.max(DEFAULT_TIMEOUT_MS, 180000));
 
     if (!response.ok) {
       return parseError(response, "Nao autenticado");
@@ -243,7 +247,7 @@ export const authApi = {
 
 export const profileApi = {
   async getProfile() {
-    const response = await fetchWithAuth("/profiles/me");
+    const response = await fetchWithAuth("/profiles/me", {}, Math.max(DEFAULT_TIMEOUT_MS, 180000));
     if (!response.ok) {
       return parseError(response, "Erro ao carregar perfil");
     }
