@@ -1,4 +1,5 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL;
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL?.trim().replace(/\/+$/, "") || "http://localhost:8000";
 const DEFAULT_TIMEOUT_MS = Number(import.meta.env.VITE_API_TIMEOUT_MS ?? 90000);
 const HOTMART_CHECKOUT_URL =
   import.meta.env.VITE_HOTMART_CHECKOUT_URL || "https://provalab-launchpad.vercel.app";
@@ -33,6 +34,20 @@ async function parseError(response: Response, fallbackMessage: string): Promise<
   }
 
   throw new Error(fallbackMessage);
+}
+
+function buildEndpoint(path: string, params?: Record<string, string | number | undefined>) {
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+  const query = new URLSearchParams();
+  if (params) {
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        query.set(key, String(value));
+      }
+    });
+  }
+  const queryString = query.toString();
+  return queryString ? `${normalizedPath}?${queryString}` : normalizedPath;
 }
 
 async function fetchWithTimeout(
@@ -268,7 +283,7 @@ export const profileApi = {
 export const exercisesApi = {
   async getRandomExercise(subject: string, difficulty: string) {
     const response = await fetchWithAuth(
-      `/exercises/random?subject=${subject}&difficulty=${difficulty}`
+      buildEndpoint("/exercises/random", { subject, difficulty })
     );
     if (!response.ok) {
       return parseError(response, "Erro ao carregar exercicio");
@@ -277,12 +292,9 @@ export const exercisesApi = {
   },
 
   async listExercises(subject?: string, difficulty?: string, limit = 50) {
-    const params = new URLSearchParams();
-    if (subject) params.append("subject", subject);
-    if (difficulty) params.append("difficulty", difficulty);
-    params.append("limit", limit.toString());
-
-    const response = await fetchWithAuth(`/exercises?${params}`);
+    const response = await fetchWithAuth(
+      buildEndpoint("/exercises", { subject, difficulty, limit })
+    );
     if (!response.ok) {
       return parseError(response, "Erro ao listar exercicios");
     }

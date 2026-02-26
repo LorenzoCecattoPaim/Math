@@ -1,6 +1,21 @@
-import { Button } from "@/components/ui/button";
-import { GraduationCap, ArrowRight, Sparkles, BookOpen, Target, TrendingUp, Brain, Zap, BarChart3, BookMarked, CheckCircle, Clock, Rocket } from "lucide-react";
 import { Link } from "react-router-dom";
+import {
+  ArrowRight,
+  BarChart3,
+  BookMarked,
+  BookOpen,
+  Brain,
+  CheckCircle,
+  Clock,
+  GraduationCap,
+  Rocket,
+  Sparkles,
+  Target,
+  TrendingUp,
+  Zap,
+} from "lucide-react";
+
+import { Button } from "@/components/ui/button";
 
 function Header() {
   return (
@@ -33,7 +48,10 @@ function Hero() {
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-secondary/5" />
       <div className="absolute top-20 left-10 w-72 h-72 bg-primary/20 rounded-full blur-3xl animate-float" />
-      <div className="absolute bottom-20 right-10 w-96 h-96 bg-secondary/20 rounded-full blur-3xl animate-float" style={{ animationDelay: "-3s" }} />
+      <div
+        className="absolute bottom-20 right-10 w-96 h-96 bg-secondary/20 rounded-full blur-3xl animate-float"
+        style={{ animationDelay: "-3s" }}
+      />
 
       <div className="container relative z-10 px-4 py-20">
         <div className="max-w-4xl mx-auto text-center">
@@ -42,44 +60,58 @@ function Hero() {
             <span className="text-sm font-medium">Plataforma de estudos inteligente</span>
           </div>
 
-          <h1 className="text-5xl md:text-7xl font-extrabold mb-6 leading-tight animate-fade-in" style={{ animationDelay: "0.1s" }}>
-            Pratique, <span className="gradient-text">Aprenda</span> e <span className="gradient-text">Evolua</span>
+          <h1
+            className="text-5xl md:text-7xl font-extrabold mb-6 leading-tight animate-fade-in"
+            style={{ animationDelay: "0.1s" }}
+          >
+            Pratique, <span className="gradient-text">Aprenda</span> e{" "}
+            <span className="gradient-text">Evolua</span>
           </h1>
 
-          <p className="text-xl md:text-2xl text-muted-foreground mb-10 max-w-2xl mx-auto animate-fade-in" style={{ animationDelay: "0.2s" }}>
-            Exercícios personalizados, correção automática e acompanhamento do seu progresso. Sua jornada de aprendizado começa aqui.
+          <p
+            className="text-xl md:text-2xl text-muted-foreground mb-10 max-w-2xl mx-auto animate-fade-in"
+            style={{ animationDelay: "0.2s" }}
+          >
+            Exercicios personalizados, correcao automatica e acompanhamento do seu progresso.
+            Sua jornada de aprendizado comeca aqui.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16 animate-fade-in" style={{ animationDelay: "0.3s" }}>
+          <div
+            className="flex flex-col sm:flex-row gap-4 justify-center mb-16 animate-fade-in"
+            style={{ animationDelay: "0.3s" }}
+          >
             <Button variant="hero" size="xl" asChild>
               <Link to="/register">
-                Começar Gratuitamente
+                Comecar Gratuitamente
                 <ArrowRight className="w-5 h-5" />
               </Link>
             </Button>
             <Button variant="outline" size="xl" asChild>
-              <Link to="/login">Já tenho conta</Link>
+              <Link to="/login">Ja tenho conta</Link>
             </Button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-3xl mx-auto animate-fade-in" style={{ animationDelay: "0.4s" }}>
+          <div
+            className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-3xl mx-auto animate-fade-in"
+            style={{ animationDelay: "0.4s" }}
+          >
             <div className="flex items-center gap-3 justify-center p-4 rounded-xl bg-card/50 backdrop-blur border border-border/50">
               <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
                 <BookOpen className="w-5 h-5 text-primary" />
               </div>
-              <span className="font-medium">Múltiplas Disciplinas</span>
+              <span className="font-medium">Multiplas Disciplinas</span>
             </div>
             <div className="flex items-center gap-3 justify-center p-4 rounded-xl bg-card/50 backdrop-blur border border-border/50">
               <div className="w-10 h-10 rounded-lg bg-secondary/10 flex items-center justify-center">
                 <Target className="w-5 h-5 text-secondary" />
               </div>
-              <span className="font-medium">Correção Instantânea</span>
+              <span className="font-medium">Correcao Instantanea</span>
             </div>
             <div className="flex items-center gap-3 justify-center p-4 rounded-xl bg-card/50 backdrop-blur border border-border/50">
               <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center">
                 <TrendingUp className="w-5 h-5 text-accent" />
               </div>
-              <span className="font-medium">Histórico Completo</span>
+              <span className="font-medium">Historico Completo</span>
             </div>
           </div>
         </div>
@@ -90,12 +122,48 @@ function Hero() {
 
 function Features() {
   const features = [
-    { icon: Brain, title: "Exercícios Dinâmicos", description: "Geração automática de questões adaptadas ao seu nível.", color: "primary" },
-    { icon: Zap, title: "Correção Instantânea", description: "Receba feedback imediato sobre suas respostas.", color: "secondary" },
-    { icon: BarChart3, title: "Acompanhe seu Progresso", description: "Visualize sua evolução com estatísticas completas.", color: "accent" },
-    { icon: BookMarked, title: "Múltiplas Disciplinas", description: "Álgebra, Geometria, Cálculo e muito mais.", color: "primary" },
-    { icon: CheckCircle, title: "Níveis de Dificuldade", description: "Escolha entre fácil, médio e difícil.", color: "secondary" },
-    { icon: Clock, title: "Estude no seu Ritmo", description: "Pratique quando e onde quiser.", color: "accent" },
+    {
+      icon: Brain,
+      title: "Exercicios Dinamicos",
+      description: "Geracao automatica de questoes adaptadas ao seu nivel.",
+      iconContainerClass: "bg-primary/10",
+      iconClass: "text-primary",
+    },
+    {
+      icon: Zap,
+      title: "Correcao Instantanea",
+      description: "Receba feedback imediato sobre suas respostas.",
+      iconContainerClass: "bg-secondary/10",
+      iconClass: "text-secondary",
+    },
+    {
+      icon: BarChart3,
+      title: "Acompanhe seu Progresso",
+      description: "Visualize sua evolucao com estatisticas completas.",
+      iconContainerClass: "bg-accent/10",
+      iconClass: "text-accent",
+    },
+    {
+      icon: BookMarked,
+      title: "Multiplas Disciplinas",
+      description: "Algebra, Geometria, Calculo e muito mais.",
+      iconContainerClass: "bg-primary/10",
+      iconClass: "text-primary",
+    },
+    {
+      icon: CheckCircle,
+      title: "Niveis de Dificuldade",
+      description: "Escolha entre facil, medio e dificil.",
+      iconContainerClass: "bg-secondary/10",
+      iconClass: "text-secondary",
+    },
+    {
+      icon: Clock,
+      title: "Estude no seu Ritmo",
+      description: "Pratique quando e onde quiser.",
+      iconContainerClass: "bg-accent/10",
+      iconClass: "text-accent",
+    },
   ];
 
   return (
@@ -103,7 +171,7 @@ function Features() {
       <div className="container px-4">
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-bold mb-4">
-            Tudo que você precisa para <span className="gradient-text">aprender melhor</span>
+            Tudo que voce precisa para <span className="gradient-text">aprender melhor</span>
           </h2>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
             Uma plataforma completa para maximizar seu aprendizado.
@@ -112,9 +180,14 @@ function Features() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
           {features.map((feature) => (
-            <div key={feature.title} className="group p-8 rounded-2xl bg-card border border-border hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
-              <div className={`w-14 h-14 rounded-xl bg-${feature.color}/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300`}>
-                <feature.icon className={`w-7 h-7 text-${feature.color}`} />
+            <div
+              key={feature.title}
+              className="group p-8 rounded-2xl bg-card border border-border hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+            >
+              <div
+                className={`w-14 h-14 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 ${feature.iconContainerClass}`}
+              >
+                <feature.icon className={`w-7 h-7 ${feature.iconClass}`} />
               </div>
               <h3 className="text-xl font-bold mb-3">{feature.title}</h3>
               <p className="text-muted-foreground leading-relaxed">{feature.description}</p>
@@ -140,7 +213,7 @@ function CTA() {
             Pronto para transformar sua forma de estudar?
           </h2>
           <p className="text-xl text-white/80 mb-10">
-            Junte-se a milhares de estudantes que já estão evoluindo com o ProvaLab.
+            Junte-se a estudantes que ja estao evoluindo com o ProvaLab.
           </p>
           <Button size="xl" className="bg-white text-primary hover:bg-white/90 shadow-xl" asChild>
             <Link to="/register">
@@ -166,7 +239,7 @@ function Footer() {
             <span className="text-xl font-bold">ProvaLab</span>
           </Link>
           <p className="text-sm text-background/60">
-            © {new Date().getFullYear()} ProvaLab. Todos os direitos reservados.
+            &copy; {new Date().getFullYear()} ProvaLab. Todos os direitos reservados.
           </p>
         </div>
       </div>

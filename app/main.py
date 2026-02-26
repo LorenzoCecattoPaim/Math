@@ -1,14 +1,14 @@
-import os
 import logging
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from app.database import engine, Base
+from app.config import AUTO_CREATE_TABLES, BACKEND_CORS_ORIGINS
 from app.exceptions import FreeLimitReachedError
 from app.routers import auth, profiles, exercises, attempts, hotmart
 
-# Criar tabelas no banco
-Base.metadata.create_all(bind=engine)
+if AUTO_CREATE_TABLES:
+    Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="ProvaLab API",
@@ -56,10 +56,12 @@ async def free_limit_reached_handler(
     )
 
 # Configurar CORS
+cors_allow_credentials = "*" not in BACKEND_CORS_ORIGINS
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=BACKEND_CORS_ORIGINS,
+    allow_credentials=cors_allow_credentials,
     allow_methods=["*"],
     allow_headers=["*"],
 )

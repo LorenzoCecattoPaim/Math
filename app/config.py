@@ -7,6 +7,14 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "supersecretkey_change_in_production_minimum_32_chars")
 JWT_ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
 JWT_EXPIRE_MINUTES = int(os.getenv("JWT_EXPIRE_MINUTES", "1440"))  # 24 hours
+ENVIRONMENT = os.getenv("ENVIRONMENT", "development").strip().lower()
+
+BACKEND_CORS_ORIGINS = [
+    origin.strip()
+    for origin in os.getenv("BACKEND_CORS_ORIGINS", "http://localhost:5173").split(",")
+    if origin.strip()
+]
+AUTO_CREATE_TABLES = os.getenv("AUTO_CREATE_TABLES", "true").strip().lower() == "true"
 
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
 EMAIL_VERIFICATION_EXPIRATION_MINUTES = int(
