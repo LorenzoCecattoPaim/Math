@@ -1,5 +1,11 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { authApi, profileApi, getAccessToken, setAccessToken } from "@/services/api";
+import {
+  authApi,
+  profileApi,
+  getAccessToken,
+  setAccessToken,
+  type AuthSession,
+} from "@/services/api";
 
 interface User {
   id: string;
@@ -53,22 +59,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const applyAuthSession = useCallback((session: AuthSession) => {
+    setUser(session.user);
+    setProfile(session.profile);
+  }, []);
+
   const syncAuthenticatedUser = useCallback(async () => {
-    const [userResult, profileResult] = await Promise.allSettled([
-      authApi.getMe(),
-      profileApi.getProfile(),
-    ]);
+    const me = await authApi.getMe();
+    setUser(me);
 
-    if (userResult.status === "rejected") {
-      throw userResult.reason;
-    }
-
-    setUser(userResult.value);
-    if (profileResult.status === "fulfilled") {
-      setProfile(profileResult.value);
-    } else {
-      setProfile(null);
-    }
+    void profileApi
+      .getProfile()
+      .then((profileData) => {
+        setProfile(profileData);
+      })
+      .catch(() => {
+        setProfile(null);
+      });
   }, []);
 
   useEffect(() => {
@@ -107,23 +114,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     fullName: string
   ) => {
     try {
-      await authApi.signup(email, password, confirmPassword, fullName);
-      await syncAuthenticatedUser();
+      const session = await authApi.signup(email, password, confirmPassword, fullName);
+      applyAuthSession(session);
       return { error: null };
     } catch (error) {
       return { error: error as Error };
     }
-  }, [syncAuthenticatedUser]);
+  }, [applyAuthSession]);
 
   const signIn = useCallback(async (email: string, password: string) => {
     try {
-      await authApi.login(email, password);
-      await syncAuthenticatedUser();
+      const session = await authApi.login(email, password);
+      applyAuthSession(session);
       return { error: null };
     } catch (error) {
       return { error: error as Error };
     }
-  }, [syncAuthenticatedUser]);
+  }, [applyAuthSession]);
 
   const startGoogleAuth = useCallback(async (googleAccessToken: string) => {
     try {

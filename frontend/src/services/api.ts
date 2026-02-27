@@ -19,6 +19,29 @@ export function getAccessToken() {
   return accessToken;
 }
 
+export interface AuthUser {
+  id: string;
+  email: string;
+  full_name: string | null;
+  google_id: string | null;
+  email_verified: boolean;
+  created_at: string;
+}
+
+export interface AuthProfile {
+  id: string;
+  user_id: string;
+  full_name: string | null;
+  avatar_url: string | null;
+}
+
+export interface AuthSession {
+  access_token: string;
+  token_type: string;
+  user: AuthUser;
+  profile: AuthProfile | null;
+}
+
 async function parseError(response: Response, fallbackMessage: string): Promise<never> {
   const error = await response.json().catch(() => null);
   const detail = error?.detail ?? error;
@@ -117,12 +140,9 @@ export const authApi = {
       return parseError(response, "Erro ao criar conta");
     }
 
-    const data = await response.json();
+    const data = (await response.json()) as AuthSession;
     setAccessToken(data.access_token);
-    return data as {
-      access_token: string;
-      token_type: string;
-    };
+    return data;
   },
 
   async login(email: string, password: string) {
@@ -140,7 +160,7 @@ export const authApi = {
       return parseError(response, "Email ou senha incorretos");
     }
 
-    const data = await response.json();
+    const data = (await response.json()) as AuthSession;
     setAccessToken(data.access_token);
     return data;
   },

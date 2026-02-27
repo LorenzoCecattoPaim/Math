@@ -33,6 +33,21 @@ class TokenResponse(BaseModel):
     token_type: str = "bearer"
 
 
+class ProfileSummaryResponse(BaseModel):
+    id: UUID
+    user_id: UUID
+    full_name: Optional[str] = None
+    avatar_url: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+class AuthSessionResponse(TokenResponse):
+    user: UserResponse
+    profile: Optional[ProfileSummaryResponse] = None
+
+
 class GoogleAuthRequest(BaseModel):
     access_token: str
 

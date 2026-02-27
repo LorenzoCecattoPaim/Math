@@ -9,6 +9,7 @@ from app.config import EMAIL_VERIFICATION_EXPIRATION_MINUTES, FRONTEND_URL, PASS
 from app.database import get_db
 from app.models import Profile, User
 from app.schemas import (
+    AuthSessionResponse,
     ForgotPasswordRequest,
     ForgotPasswordResponse,
     GoogleAuthRequest,
@@ -37,7 +38,7 @@ from app.services.plan_service import ensure_user_plan_profile
 router = APIRouter(prefix="/auth", tags=["Autenticacao"])
 
 
-@router.post("/signup", response_model=TokenResponse)
+@router.post("/signup", response_model=AuthSessionResponse)
 def signup(user_data: UserCreate, db: Session = Depends(get_db)):
     """Registrar novo usuario com email/senha e autenticar imediatamente."""
     normalized_email = user_data.email.strip().lower()
@@ -96,10 +97,14 @@ def signup(user_data: UserCreate, db: Session = Depends(get_db)):
     db.commit()
 
     access_token = create_access_token(data={"sub": str(existing_user.id)})
-    return TokenResponse(access_token=access_token)
+    return AuthSessionResponse(
+        access_token=access_token,
+        user=existing_user,
+        profile=existing_user.profile,
+    )
 
 
-@router.post("/login", response_model=TokenResponse)
+@router.post("/login", response_model=AuthSessionResponse)
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     """Login com email e senha."""
     normalized_email = form_data.username.strip().lower()
@@ -125,7 +130,11 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
         )
 
     access_token = create_access_token(data={"sub": str(user.id)})
-    return TokenResponse(access_token=access_token)
+    return AuthSessionResponse(
+        access_token=access_token,
+        user=user,
+        profile=user.profile,
+    )
 
 
 @router.post("/google", response_model=GoogleAuthResponse)

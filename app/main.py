@@ -1,4 +1,5 @@
 import logging
+import time
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -27,16 +28,19 @@ async def options_handler(path: str):
 
 @app.middleware("http")
 async def auth_audit_middleware(request: Request, call_next):
+    start = time.perf_counter()
     response = await call_next(request)
+    elapsed_ms = (time.perf_counter() - start) * 1000
 
     if request.url.path.startswith("/auth"):
         client_ip = request.client.host if request.client else "unknown"
         logger.info(
-            "auth_audit method=%s path=%s status=%s ip=%s",
+            "auth_audit method=%s path=%s status=%s ip=%s duration_ms=%.2f",
             request.method,
             request.url.path,
             response.status_code,
             client_ip,
+            elapsed_ms,
         )
 
     return response
