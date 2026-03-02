@@ -1,7 +1,11 @@
+import logging
+import time
 from datetime import timedelta
+from typing import Union
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordRequestForm
+from sqlalchemy.orm import joinedload
 from sqlalchemy.orm import Session
 
 from app.auth import create_access_token, get_current_user, hash_password, verify_password
@@ -10,6 +14,7 @@ from app.database import get_db
 from app.models import Profile, User
 from app.schemas import (
     AuthSessionResponse,
+    EmailVerificationChallengeResponse,
     ForgotPasswordRequest,
     ForgotPasswordResponse,
     GoogleAuthRequest,
@@ -25,6 +30,7 @@ from app.schemas import (
     VerifyEmailLinkRequest,
 )
 from app.services.auth_service import (
+    issue_email_verification_challenge,
     request_password_reset,
     resend_email_code,
     reset_password,
@@ -36,13 +42,25 @@ from app.services.email_service import send_verification_email
 from app.services.plan_service import ensure_user_plan_profile
 
 router = APIRouter(prefix="/auth", tags=["Autenticacao"])
+logger = logging.getLogger(__name__)
 
 
-@router.post("/signup", response_model=AuthSessionResponse)
-def signup(user_data: UserCreate, db: Session = Depends(get_db)):
-    """Registrar novo usuario com email/senha e autenticar imediatamente."""
+@router.post("/signup", response_model=Union[AuthSessionResponse, EmailVerificationChallengeResponse])
+def signup(
+    user_data: UserCreate,
+    request: Request,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+):
+    """Registrar novo usuario com email/senha e iniciar verificacao de email."""
+    start = time.perf_counter()
     normalized_email = user_data.email.strip().lower()
-    existing_user = db.query(User).filter(User.email == normalized_email).first()
+    existing_user = (
+        db.query(User)
+        .options(joinedload(User.profile), joinedload(User.plan_profile))
+        .filter(User.email == normalized_email)
+        .first()
+    )
 
     if user_data.password != user_data.confirm_password:
         raise HTTPException(
@@ -77,38 +95,57 @@ def signup(user_data: UserCreate, db: Session = Depends(get_db)):
 
         if user_data.full_name and not existing_user.full_name:
             existing_user.full_name = user_data.full_name
-            db.commit()
     else:
         existing_user = User(
             email=normalized_email,
             full_name=user_data.full_name,
             password_hash=hash_password(user_data.password),
-            email_verified=True,
+            email_verified=False,
         )
         db.add(existing_user)
-        db.commit()
-        db.refresh(existing_user)
-    if not existing_user.email_verified:
-        existing_user.email_verified = True
 
     if not existing_user.profile:
         db.add(Profile(user_id=existing_user.id, full_name=user_data.full_name or existing_user.full_name))
     ensure_user_plan_profile(existing_user)
     db.commit()
+    db.refresh(existing_user)
 
-    access_token = create_access_token(data={"sub": str(existing_user.id)})
-    return AuthSessionResponse(
-        access_token=access_token,
+    challenge = issue_email_verification_challenge(
         user=existing_user,
-        profile=existing_user.profile,
+        db=db,
+        send_email=True,
+        request_ip=request.client.host if request.client else None,
+        background_tasks=background_tasks,
+    )
+    logger.info(
+        "auth_signup_verification_challenge user_id=%s duration_ms=%.2f",
+        str(existing_user.id),
+        (time.perf_counter() - start) * 1000,
+    )
+    return EmailVerificationChallengeResponse(
+        pending_token=challenge["pending_token"],
+        email=challenge["email"],
+        code_expires_in_seconds=challenge["code_expires_in_seconds"],
+        message="Conta criada. Verifique seu email para concluir o acesso.",
     )
 
 
-@router.post("/login", response_model=AuthSessionResponse)
-def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+@router.post("/login", response_model=Union[AuthSessionResponse, EmailVerificationChallengeResponse])
+def login(
+    request: Request,
+    background_tasks: BackgroundTasks,
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    db: Session = Depends(get_db),
+):
     """Login com email e senha."""
+    start = time.perf_counter()
     normalized_email = form_data.username.strip().lower()
-    user = db.query(User).filter(User.email == normalized_email).first()
+    user = (
+        db.query(User)
+        .options(joinedload(User.profile), joinedload(User.plan_profile))
+        .filter(User.email == normalized_email)
+        .first()
+    )
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -129,7 +166,32 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
             headers={"WWW-Authenticate": "Bearer"},
         )
 
+    if not user.email_verified:
+        challenge = issue_email_verification_challenge(
+            user=user,
+            db=db,
+            send_email=True,
+            request_ip=request.client.host if request.client else None,
+            background_tasks=background_tasks,
+        )
+        logger.info(
+            "auth_login_email_not_verified user_id=%s duration_ms=%.2f",
+            str(user.id),
+            (time.perf_counter() - start) * 1000,
+        )
+        return EmailVerificationChallengeResponse(
+            pending_token=challenge["pending_token"],
+            email=challenge["email"],
+            code_expires_in_seconds=challenge["code_expires_in_seconds"],
+            message="Email nao verificado. Enviamos um novo codigo de confirmacao.",
+        )
+
     access_token = create_access_token(data={"sub": str(user.id)})
+    logger.info(
+        "auth_login_success user_id=%s duration_ms=%.2f",
+        str(user.id),
+        (time.perf_counter() - start) * 1000,
+    )
     return AuthSessionResponse(
         access_token=access_token,
         user=user,

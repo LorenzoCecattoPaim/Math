@@ -19,7 +19,7 @@ def check_plan_limit(
         had_plan_profile = current_user.plan_profile is not None
         plan_profile = ensure_user_plan_profile(current_user)
 
-        if plan_profile.plan == "premium":
+        if plan_profile.plan == "premium" or plan_profile.is_premium:
             if not had_plan_profile:
                 db.add(current_user)
                 db.commit()

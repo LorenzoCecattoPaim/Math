@@ -82,7 +82,7 @@ export default function Register() {
       return;
     }
 
-    const { error } = await signUp(email, password, confirmPassword, fullName);
+    const { error, verification } = await signUp(email, password, confirmPassword, fullName);
 
     if (error) {
       toast({
@@ -90,6 +90,16 @@ export default function Register() {
         title: "Erro ao criar conta",
         description: error.message || "Nao foi possivel criar sua conta.",
       });
+    } else if (verification) {
+      toast({
+        title: "Verificacao necessaria",
+        description: verification.message,
+      });
+      const params = new URLSearchParams({
+        pending_token: verification.pending_token,
+        email: verification.email,
+      });
+      navigate(`/verify-email?${params.toString()}`);
     } else {
       toast({
         title: "Conta criada com sucesso",

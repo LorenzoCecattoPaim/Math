@@ -96,7 +96,7 @@ export default function VerifyEmail() {
       toast({
         variant: "destructive",
         title: "Sessao de verificacao invalida",
-        description: "Inicie o login com Google novamente.",
+        description: "Inicie o acesso novamente para receber um novo codigo.",
       });
       return;
     }
@@ -148,7 +148,7 @@ export default function VerifyEmail() {
       toast({
         variant: "destructive",
         title: "Sessao de verificacao invalida",
-        description: "Inicie o login com Google novamente.",
+        description: "Inicie o acesso novamente para receber um novo codigo.",
       });
       return;
     }

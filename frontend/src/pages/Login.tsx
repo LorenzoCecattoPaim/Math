@@ -57,7 +57,7 @@ export default function Login() {
     e.preventDefault();
     setLoading(true);
 
-    const { error } = await signIn(email, password);
+    const { error, verification } = await signIn(email, password);
 
     if (error) {
       toast({
@@ -65,6 +65,16 @@ export default function Login() {
         title: "Erro ao entrar",
         description: error.message,
       });
+    } else if (verification) {
+      toast({
+        title: "Verificacao necessaria",
+        description: verification.message,
+      });
+      const params = new URLSearchParams({
+        pending_token: verification.pending_token,
+        email: verification.email,
+      });
+      navigate(`/verify-email?${params.toString()}`);
     } else {
       navigate("/dashboard");
     }

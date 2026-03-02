@@ -4,6 +4,8 @@ import {
   profileApi,
   getAccessToken,
   setAccessToken,
+  isEmailVerificationChallenge,
+  type EmailVerificationChallenge,
   type AuthSession,
 } from "@/services/api";
 
@@ -38,8 +40,11 @@ interface AuthContextType {
     password: string,
     confirmPassword: string,
     fullName: string
-  ) => Promise<{ error: Error | null }>;
-  signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
+  ) => Promise<{ error: Error | null; verification: EmailVerificationChallenge | null }>;
+  signIn: (
+    email: string,
+    password: string
+  ) => Promise<{ error: Error | null; verification: EmailVerificationChallenge | null }>;
   startGoogleAuth: (googleAccessToken: string) => Promise<{
     data: PendingGoogleAuth | null;
     error: Error | null;
@@ -114,21 +119,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     fullName: string
   ) => {
     try {
-      const session = await authApi.signup(email, password, confirmPassword, fullName);
-      applyAuthSession(session);
-      return { error: null };
+      const response = await authApi.signup(email, password, confirmPassword, fullName);
+      if (isEmailVerificationChallenge(response)) {
+        return { error: null, verification: response };
+      }
+      applyAuthSession(response);
+      return { error: null, verification: null };
     } catch (error) {
-      return { error: error as Error };
+      return { error: error as Error, verification: null };
     }
   }, [applyAuthSession]);
 
   const signIn = useCallback(async (email: string, password: string) => {
     try {
-      const session = await authApi.login(email, password);
-      applyAuthSession(session);
-      return { error: null };
+      const response = await authApi.login(email, password);
+      if (isEmailVerificationChallenge(response)) {
+        return { error: null, verification: response };
+      }
+      applyAuthSession(response);
+      return { error: null, verification: null };
     } catch (error) {
-      return { error: error as Error };
+      return { error: error as Error, verification: null };
     }
   }, [applyAuthSession]);
 

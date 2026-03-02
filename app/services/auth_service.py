@@ -10,7 +10,7 @@ import urllib.request
 from datetime import datetime, timedelta, timezone
 from uuid import UUID
 
-from fastapi import HTTPException, status
+from fastapi import BackgroundTasks, HTTPException, status
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
@@ -245,6 +245,8 @@ def _create_email_verification_code(
 def issue_email_verification_challenge(
     user: User,
     db: Session,
+    send_email: bool = False,
+    background_tasks: BackgroundTasks | None = None,
     request_ip: str | None = None,
 ) -> dict:
     verification, raw_code = _create_email_verification_code(
@@ -253,6 +255,29 @@ def issue_email_verification_challenge(
         request_ip=request_ip,
     )
     pending_token = _create_pending_token(user.id, verification.id)
+    magic_link = _create_magic_link(user.id, verification.id)
+    if send_email:
+        if background_tasks is not None:
+            background_tasks.add_task(
+                send_verification_email,
+                user.email,
+                user.full_name,
+                raw_code,
+                magic_link,
+            )
+            logger.info("Verification email scheduled for user_id=%s", str(user.id))
+        else:
+            sent = send_verification_email(
+                user.email,
+                user.full_name,
+                raw_code,
+                magic_link,
+            )
+            if not sent:
+                raise HTTPException(
+                    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                    detail="Nao foi possivel enviar o email de verificacao. Tente novamente em instantes.",
+                )
     return {
         "pending_token": pending_token,
         "email": user.email,
@@ -262,6 +287,7 @@ def issue_email_verification_challenge(
         "verification_code": raw_code,
         "verification_code_id": str(verification.id),
         "user_id": str(user.id),
+        "magic_link": magic_link,
     }
 
 

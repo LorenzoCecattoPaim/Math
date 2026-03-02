@@ -48,6 +48,15 @@ class AuthSessionResponse(TokenResponse):
     profile: Optional[ProfileSummaryResponse] = None
 
 
+class EmailVerificationChallengeResponse(BaseModel):
+    pending_token: str
+    pending_token_type: str = "bearer"
+    verification_required: bool = True
+    email: str
+    code_expires_in_seconds: int
+    message: str
+
+
 class GoogleAuthRequest(BaseModel):
     access_token: str
 
@@ -120,6 +129,9 @@ class UserPlanResponse(BaseModel):
     id: UUID
     email: str
     plan: str
+    is_premium: bool
+    subscription_status: str
+    payment_status: str
     free_uses: int
     uses_count: int
     hotmart_purchase_id: Optional[str] = None

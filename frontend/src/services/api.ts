@@ -42,14 +42,29 @@ export interface AuthSession {
   profile: AuthProfile | null;
 }
 
+export interface EmailVerificationChallenge {
+  pending_token: string;
+  pending_token_type: string;
+  verification_required: boolean;
+  email: string;
+  code_expires_in_seconds: number;
+  message: string;
+}
+
+export function isEmailVerificationChallenge(
+  response: AuthSession | EmailVerificationChallenge
+): response is EmailVerificationChallenge {
+  return "verification_required" in response && response.verification_required === true;
+}
+
 async function parseError(response: Response, fallbackMessage: string): Promise<never> {
   const error = await response.json().catch(() => null);
   const detail = error?.detail ?? error;
 
-  if (response.status === 402 && detail?.error === "FREE_LIMIT_REACHED") {
-    const checkoutUrl = detail?.checkout_url || HOTMART_CHECKOUT_URL;
+  if (response.status === 403 && typeof error?.detail === "string" && error.detail.includes("premium")) {
+    const checkoutUrl = error?.checkout_url || HOTMART_CHECKOUT_URL;
     window.location.href = checkoutUrl;
-    throw new Error("FREE_LIMIT_REACHED");
+    throw new Error(error.detail);
   }
 
   if (typeof detail === "string") {
@@ -140,8 +155,10 @@ export const authApi = {
       return parseError(response, "Erro ao criar conta");
     }
 
-    const data = (await response.json()) as AuthSession;
-    setAccessToken(data.access_token);
+    const data = (await response.json()) as AuthSession | EmailVerificationChallenge;
+    if (!isEmailVerificationChallenge(data)) {
+      setAccessToken(data.access_token);
+    }
     return data;
   },
 
@@ -160,8 +177,10 @@ export const authApi = {
       return parseError(response, "Email ou senha incorretos");
     }
 
-    const data = (await response.json()) as AuthSession;
-    setAccessToken(data.access_token);
+    const data = (await response.json()) as AuthSession | EmailVerificationChallenge;
+    if (!isEmailVerificationChallenge(data)) {
+      setAccessToken(data.access_token);
+    }
     return data;
   },
 

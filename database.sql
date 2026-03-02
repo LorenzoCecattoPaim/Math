@@ -102,6 +102,9 @@ CREATE TABLE IF NOT EXISTS public.users_profile (
     id UUID PRIMARY KEY REFERENCES public.users(id) ON DELETE CASCADE,
     email TEXT NOT NULL,
     plan TEXT NOT NULL DEFAULT 'free',
+    is_premium BOOLEAN NOT NULL DEFAULT FALSE,
+    subscription_status TEXT NOT NULL DEFAULT 'inactive',
+    payment_status TEXT NOT NULL DEFAULT 'pending',
     free_uses INTEGER NOT NULL DEFAULT 5,
     uses_count INTEGER NOT NULL DEFAULT 0,
     hotmart_purchase_id TEXT,
@@ -120,6 +123,9 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_users_google_id ON public.users(google_id) 
 ALTER TABLE public.users_profile ADD COLUMN IF NOT EXISTS email TEXT;
 ALTER TABLE public.users_profile ALTER COLUMN email SET NOT NULL;
 ALTER TABLE public.users_profile ADD COLUMN IF NOT EXISTS plan TEXT NOT NULL DEFAULT 'free';
+ALTER TABLE public.users_profile ADD COLUMN IF NOT EXISTS is_premium BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE public.users_profile ADD COLUMN IF NOT EXISTS subscription_status TEXT NOT NULL DEFAULT 'inactive';
+ALTER TABLE public.users_profile ADD COLUMN IF NOT EXISTS payment_status TEXT NOT NULL DEFAULT 'pending';
 ALTER TABLE public.users_profile ADD COLUMN IF NOT EXISTS free_uses INTEGER NOT NULL DEFAULT 5;
 ALTER TABLE public.users_profile ADD COLUMN IF NOT EXISTS uses_count INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE public.users_profile ADD COLUMN IF NOT EXISTS hotmart_purchase_id TEXT;
@@ -146,6 +152,9 @@ CREATE INDEX IF NOT EXISTS idx_verification_codes_expires_at ON public.email_ver
 CREATE INDEX IF NOT EXISTS idx_verification_codes_request_ip ON public.email_verification_codes(request_ip);
 CREATE INDEX IF NOT EXISTS idx_users_profile_email ON public.users_profile(email);
 CREATE INDEX IF NOT EXISTS idx_users_profile_plan ON public.users_profile(plan);
+CREATE INDEX IF NOT EXISTS idx_users_profile_is_premium ON public.users_profile(is_premium);
+CREATE INDEX IF NOT EXISTS idx_users_profile_subscription_status ON public.users_profile(subscription_status);
+CREATE INDEX IF NOT EXISTS idx_users_profile_payment_status ON public.users_profile(payment_status);
 CREATE INDEX IF NOT EXISTS idx_password_reset_user_id ON public.password_reset_tokens(user_id);
 CREATE INDEX IF NOT EXISTS idx_password_reset_token_hash ON public.password_reset_tokens(token_hash);
 CREATE INDEX IF NOT EXISTS idx_password_reset_expires_at ON public.password_reset_tokens(expires_at);

@@ -52,9 +52,9 @@ async def free_limit_reached_handler(
     exc: FreeLimitReachedError,
 ):
     return JSONResponse(
-        status_code=402,
+        status_code=403,
         content={
-            "error": "FREE_LIMIT_REACHED",
+            "detail": "Conteúdo disponível apenas para usuários premium.",
             "checkout_url": exc.checkout_url,
         },
     )
