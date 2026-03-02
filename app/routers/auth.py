@@ -103,6 +103,7 @@ def signup(
             email_verified=False,
         )
         db.add(existing_user)
+        db.flush()
 
     if not existing_user.profile:
         db.add(Profile(user_id=existing_user.id, full_name=user_data.full_name or existing_user.full_name))

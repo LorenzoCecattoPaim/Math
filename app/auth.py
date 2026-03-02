@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 from typing import Optional
+from uuid import UUID
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from fastapi import Depends, HTTPException, status
@@ -49,10 +50,15 @@ def get_current_user(
     if payload is None:
         raise credentials_exception
     
-    user_id = payload.get("sub")
-    if user_id is None:
+    user_id_raw = payload.get("sub")
+    if user_id_raw is None:
         raise credentials_exception
-    
+
+    try:
+        user_id = UUID(str(user_id_raw))
+    except ValueError:
+        raise credentials_exception
+
     user = db.query(User).filter(User.id == user_id).first()
     if user is None:
         raise credentials_exception

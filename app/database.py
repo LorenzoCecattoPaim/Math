@@ -43,15 +43,29 @@ def _normalize_database_url(raw_url: str | None) -> str:
 
 
 normalized_database_url = _normalize_database_url(DATABASE_URL)
+database_url = make_url(normalized_database_url)
+
+engine_kwargs = {
+    "pool_pre_ping": True,
+    "pool_recycle": 300,
+}
+
+if database_url.drivername.startswith("sqlite"):
+    # SQLite does not support the PostgreSQL connection/pool keyword set.
+    engine_kwargs["connect_args"] = {"check_same_thread": False}
+else:
+    engine_kwargs.update(
+        {
+            "pool_size": DB_POOL_SIZE,
+            "max_overflow": DB_MAX_OVERFLOW,
+            "pool_timeout": DB_POOL_TIMEOUT_SECONDS,
+            "connect_args": {"connect_timeout": 10},
+        }
+    )
 
 engine = create_engine(
     normalized_database_url,
-    pool_pre_ping=True,
-    pool_recycle=300,
-    pool_size=DB_POOL_SIZE,
-    max_overflow=DB_MAX_OVERFLOW,
-    pool_timeout=DB_POOL_TIMEOUT_SECONDS,
-    connect_args={"connect_timeout": 10},
+    **engine_kwargs,
 )
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()

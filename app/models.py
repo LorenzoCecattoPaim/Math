@@ -1,7 +1,18 @@
 import uuid
 from datetime import datetime
-from sqlalchemy import Column, String, Text, DateTime, ForeignKey, Boolean, Integer, Enum as SQLEnum, JSON, Index
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import (
+    Column,
+    String,
+    Text,
+    DateTime,
+    ForeignKey,
+    Boolean,
+    Integer,
+    Enum as SQLEnum,
+    JSON,
+    Index,
+    Uuid,
+)
 from sqlalchemy.orm import relationship
 from app.database import Base
 import enum
@@ -23,7 +34,7 @@ class SubjectType(str, enum.Enum):
 class User(Base):
     __tablename__ = "users"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
     email = Column(String(255), unique=True, nullable=False, index=True)
     full_name = Column(String(255), nullable=True)
     password_hash = Column(Text, nullable=True)
@@ -49,8 +60,8 @@ class User(Base):
 class Profile(Base):
     __tablename__ = "profiles"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False)
+    id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(Uuid(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False)
     full_name = Column(String(255), nullable=True)
     avatar_url = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -65,7 +76,7 @@ class Exercise(Base):
         Index("idx_exercises_subject_difficulty_created_at", "subject", "difficulty", "created_at"),
     )
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
     question = Column(Text, nullable=False)
     options = Column(JSON, nullable=True)  # Array of options
     correct_answer = Column(Text, nullable=False)
@@ -82,9 +93,9 @@ class ExerciseAttempt(Base):
         Index("idx_attempts_user_created_at", "user_id", "created_at"),
     )
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    exercise_id = Column(UUID(as_uuid=True), ForeignKey("exercises.id", ondelete="CASCADE"), nullable=False)
+    id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(Uuid(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    exercise_id = Column(Uuid(as_uuid=True), ForeignKey("exercises.id", ondelete="CASCADE"), nullable=False)
     user_answer = Column(Text, nullable=False)
     is_correct = Column(Boolean, nullable=False)
     time_spent_seconds = Column(Integer, nullable=True)
@@ -97,9 +108,9 @@ class ExerciseAttempt(Base):
 class EmailVerificationCode(Base):
     __tablename__ = "email_verification_codes"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id = Column(
-        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+        Uuid(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
     )
     code_hash = Column(String(255), nullable=False)
     attempts_count = Column(Integer, nullable=False, default=0)
@@ -114,9 +125,9 @@ class EmailVerificationCode(Base):
 class PasswordResetToken(Base):
     __tablename__ = "password_reset_tokens"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id = Column(
-        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+        Uuid(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
     )
     token_hash = Column(String(255), nullable=False, index=True)
     expires_at = Column(DateTime, nullable=False)
@@ -130,7 +141,7 @@ class PasswordResetToken(Base):
 class UserProfile(Base):
     __tablename__ = "users_profile"
 
-    id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    id = Column(Uuid(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
     email = Column(Text, nullable=False, index=True)
     plan = Column(String(50), nullable=False, default="free")
     is_premium = Column(Boolean, nullable=False, default=False, index=True)
