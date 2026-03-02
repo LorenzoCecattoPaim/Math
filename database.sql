@@ -83,7 +83,7 @@ CREATE TABLE IF NOT EXISTS public.vestibular_exercises (
 
 CREATE TABLE IF NOT EXISTS public.user_vestibular_progress (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES public.users(id) ON DELETE CASCADE,
     exercise_id UUID REFERENCES public.vestibular_exercises(id) ON DELETE CASCADE,
     correct BOOLEAN,
     answered_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -155,6 +155,25 @@ ALTER TABLE public.users_profile ADD COLUMN IF NOT EXISTS created_at TIMESTAMP W
 ALTER TABLE public.users_profile ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
 ALTER TABLE public.email_verification_codes ADD COLUMN IF NOT EXISTS request_ip VARCHAR(64);
 ALTER TABLE public.password_reset_tokens ADD COLUMN IF NOT EXISTS request_ip VARCHAR(64);
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1
+        FROM information_schema.table_constraints
+        WHERE table_schema = 'public'
+          AND table_name = 'user_vestibular_progress'
+          AND constraint_name = 'user_vestibular_progress_user_id_fkey'
+    ) THEN
+        ALTER TABLE public.user_vestibular_progress
+            DROP CONSTRAINT user_vestibular_progress_user_id_fkey;
+    END IF;
+
+    ALTER TABLE public.user_vestibular_progress
+        ADD CONSTRAINT user_vestibular_progress_user_id_fkey
+        FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
 
 -- ============================================
 -- Índices para Performance

@@ -239,3 +239,4 @@ def test_database_sql_contains_vestibular_rls():
     assert "ALTER TABLE public.user_vestibular_progress ENABLE ROW LEVEL SECURITY;" in sql_content
     assert "CREATE POLICY vestibular_exercises_select_premium" in sql_content
     assert "CREATE POLICY user_vestibular_progress_insert_premium" in sql_content
+    assert "user_id UUID REFERENCES public.users(id) ON DELETE CASCADE" in sql_content

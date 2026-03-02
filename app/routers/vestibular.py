@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import case, func
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 
 from app.auth import get_current_user
 from app.config import HOTMART_CHECKOUT_URL
@@ -132,7 +133,20 @@ def submit_vestibular_answer(
         correct=is_correct,
     )
     db.add(progress)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+        message = str(exc.orig).lower() if exc.orig is not None else str(exc).lower()
+        if "unique" in message:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Exercicio vestibular ja respondido por este usuario.",
+            ) from exc
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Nao foi possivel registrar a resposta vestibular.",
+        ) from exc
 
     _, _, accuracy = _get_user_vestibular_stats(db, current_user.id)
 
