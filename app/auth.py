@@ -2,7 +2,10 @@ from datetime import datetime, timedelta
 from typing import Optional
 from uuid import UUID
 from jose import JWTError, jwt
+import logging
+
 from passlib.context import CryptContext
+from passlib.exc import UnknownHashError
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
@@ -12,12 +15,17 @@ from app.models import User
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
+logger = logging.getLogger(__name__)
 
 def hash_password(password: str) -> str:
     return pwd_context.hash(password)
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return pwd_context.verify(plain_password, hashed_password)
+    try:
+        return pwd_context.verify(plain_password, hashed_password)
+    except (UnknownHashError, ValueError):
+        logger.warning("Unable to verify password due to invalid hash format.")
+        return False
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
     to_encode = data.copy()
