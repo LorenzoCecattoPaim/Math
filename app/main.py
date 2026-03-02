@@ -6,7 +6,7 @@ from fastapi.responses import JSONResponse
 from app.database import engine, Base
 from app.config import AUTO_CREATE_TABLES, BACKEND_CORS_ORIGINS
 from app.exceptions import FreeLimitReachedError
-from app.routers import auth, profiles, exercises, attempts, hotmart
+from app.routers import auth, profiles, exercises, attempts, hotmart, vestibular
 
 if AUTO_CREATE_TABLES:
     Base.metadata.create_all(bind=engine)
@@ -76,6 +76,7 @@ app.include_router(profiles.router)
 app.include_router(exercises.router)
 app.include_router(attempts.router)
 app.include_router(hotmart.router)
+app.include_router(vestibular.router)
 
 @app.get("/")
 def root():

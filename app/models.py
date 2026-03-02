@@ -12,6 +12,8 @@ from sqlalchemy import (
     JSON,
     Index,
     Uuid,
+    UniqueConstraint,
+    CheckConstraint,
 )
 from sqlalchemy.orm import relationship
 from app.database import Base
@@ -50,6 +52,11 @@ class User(Base):
         cascade="all, delete-orphan",
     )
     attempts = relationship("ExerciseAttempt", back_populates="user")
+    vestibular_progress = relationship(
+        "UserVestibularProgress",
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
     verification_codes = relationship(
         "EmailVerificationCode", back_populates="user", cascade="all, delete-orphan"
     )
@@ -103,6 +110,56 @@ class ExerciseAttempt(Base):
     
     user = relationship("User", back_populates="attempts")
     exercise = relationship("Exercise", back_populates="attempts")
+
+
+class VestibularExercise(Base):
+    __tablename__ = "vestibular_exercises"
+    __table_args__ = (
+        CheckConstraint(
+            "difficulty IN ('medium', 'hard')",
+            name="ck_vestibular_exercises_difficulty",
+        ),
+    )
+
+    id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    question = Column(Text, nullable=False)
+    options = Column(JSON, nullable=False)
+    correct_answer = Column(Text, nullable=False)
+    explanation = Column(Text, nullable=True)
+    difficulty = Column(SQLEnum(DifficultyLevel), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    progress_entries = relationship(
+        "UserVestibularProgress",
+        back_populates="exercise",
+        cascade="all, delete-orphan",
+    )
+
+
+class UserVestibularProgress(Base):
+    __tablename__ = "user_vestibular_progress"
+    __table_args__ = (
+        UniqueConstraint(
+            "user_id",
+            "exercise_id",
+            name="uq_user_vestibular_progress_user_exercise",
+        ),
+        Index("idx_user_vestibular_progress_user_id", "user_id"),
+        Index("idx_user_vestibular_progress_exercise_id", "exercise_id"),
+    )
+
+    id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(Uuid(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    exercise_id = Column(
+        Uuid(as_uuid=True),
+        ForeignKey("vestibular_exercises.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    correct = Column(Boolean, nullable=False)
+    answered_at = Column(DateTime, default=datetime.utcnow)
+
+    user = relationship("User", back_populates="vestibular_progress")
+    exercise = relationship("VestibularExercise", back_populates="progress_entries")
 
 
 class EmailVerificationCode(Base):

@@ -69,6 +69,28 @@ CREATE TABLE IF NOT EXISTS public.exercise_attempts (
 );
 
 -- ============================================
+-- Tabelas Vestibulares (Premium)
+-- ============================================
+CREATE TABLE IF NOT EXISTS public.vestibular_exercises (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    question TEXT NOT NULL,
+    options JSONB NOT NULL,
+    correct_answer TEXT NOT NULL,
+    explanation TEXT,
+    difficulty TEXT CHECK (difficulty IN ('medium', 'hard')),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS public.user_vestibular_progress (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+    exercise_id UUID REFERENCES public.vestibular_exercises(id) ON DELETE CASCADE,
+    correct BOOLEAN,
+    answered_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE (user_id, exercise_id)
+);
+
+-- ============================================
 -- Tabela de CÃ³digos de VerificaÃ§Ã£o de Email
 -- ============================================
 CREATE TABLE IF NOT EXISTS public.email_verification_codes (
@@ -146,6 +168,8 @@ CREATE INDEX IF NOT EXISTS idx_exercises_subject_difficulty_created_at ON public
 CREATE INDEX IF NOT EXISTS idx_attempts_user_id ON public.exercise_attempts(user_id);
 CREATE INDEX IF NOT EXISTS idx_attempts_exercise_id ON public.exercise_attempts(exercise_id);
 CREATE INDEX IF NOT EXISTS idx_attempts_user_created_at ON public.exercise_attempts(user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_user_vestibular_progress_user_id ON public.user_vestibular_progress(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_vestibular_progress_exercise_id ON public.user_vestibular_progress(exercise_id);
 CREATE INDEX IF NOT EXISTS idx_users_google_id ON public.users(google_id);
 CREATE INDEX IF NOT EXISTS idx_verification_codes_user_id ON public.email_verification_codes(user_id);
 CREATE INDEX IF NOT EXISTS idx_verification_codes_expires_at ON public.email_verification_codes(expires_at);
@@ -159,6 +183,45 @@ CREATE INDEX IF NOT EXISTS idx_password_reset_user_id ON public.password_reset_t
 CREATE INDEX IF NOT EXISTS idx_password_reset_token_hash ON public.password_reset_tokens(token_hash);
 CREATE INDEX IF NOT EXISTS idx_password_reset_expires_at ON public.password_reset_tokens(expires_at);
 CREATE INDEX IF NOT EXISTS idx_password_reset_request_ip ON public.password_reset_tokens(request_ip);
+
+-- ============================================
+-- RLS Vestibulares
+-- ============================================
+ALTER TABLE public.vestibular_exercises ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.user_vestibular_progress ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS vestibular_exercises_select_premium ON public.vestibular_exercises;
+CREATE POLICY vestibular_exercises_select_premium
+ON public.vestibular_exercises
+FOR SELECT
+USING (
+    EXISTS (
+        SELECT 1
+        FROM public.users_profile up
+        WHERE up.id = auth.uid()
+          AND (up.plan = 'premium' OR up.is_premium = TRUE)
+    )
+);
+
+DROP POLICY IF EXISTS user_vestibular_progress_select_own ON public.user_vestibular_progress;
+CREATE POLICY user_vestibular_progress_select_own
+ON public.user_vestibular_progress
+FOR SELECT
+USING (user_id = auth.uid());
+
+DROP POLICY IF EXISTS user_vestibular_progress_insert_premium ON public.user_vestibular_progress;
+CREATE POLICY user_vestibular_progress_insert_premium
+ON public.user_vestibular_progress
+FOR INSERT
+WITH CHECK (
+    user_id = auth.uid()
+    AND EXISTS (
+        SELECT 1
+        FROM public.users_profile up
+        WHERE up.id = auth.uid()
+          AND (up.plan = 'premium' OR up.is_premium = TRUE)
+    )
+);
 -- ============================================
 -- Trigger para Atualizar updated_at
 -- ============================================

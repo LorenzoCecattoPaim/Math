@@ -201,3 +201,39 @@ class StatsResponse(BaseModel):
 class ProgressResponse(BaseModel):
     attempts: List[AttemptResponse]
     stats: StatsResponse
+
+
+class VestibularExerciseResponse(BaseModel):
+    id: UUID
+    question: str
+    options: List[str]
+    correct_answer: str
+    difficulty: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class VestibularExercisesPageResponse(BaseModel):
+    items: List[VestibularExerciseResponse]
+    limit: int
+    offset: int
+    has_more: bool
+
+
+class VestibularAnswerRequest(BaseModel):
+    exercise_id: UUID
+    answer: str
+
+
+class VestibularAnswerResponse(BaseModel):
+    correct: bool
+    explanation: Optional[str] = None
+    accuracy: int
+
+
+class VestibularStatsResponse(BaseModel):
+    exercicios_feitos: int
+    respostas_corretas: int
+    taxa_acerto: int

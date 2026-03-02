@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -13,12 +13,16 @@ import {
   XCircle,
   Zap,
 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useTimer } from "@/hooks/useTimer";
-import { attemptsApi, exercisesApi } from "@/services/api";
+import { attemptsApi, exercisesApi, profileApi, vestibularApi } from "@/services/api";
+
+const HOTMART_CHECKOUT_URL =
+  import.meta.env.VITE_HOTMART_CHECKOUT_URL || "https://provalab-launchpad.vercel.app";
 
 type Difficulty = "easy" | "medium" | "hard";
 
@@ -43,6 +47,7 @@ const subjectNames: Record<string, string> = {
   statistics: "Estatistica",
   trigonometry: "Trigonometria",
   arithmetic: "Aritmetica",
+  vestibular: "Vestibulares",
 };
 
 const difficultyCards: Record<
@@ -87,6 +92,12 @@ export default function Practice() {
   const { user } = useAuth();
   const { toast } = useToast();
 
+  const isVestibular = subject === "vestibular";
+  const availableDifficulties = useMemo<Difficulty[]>(
+    () => (isVestibular ? ["medium", "hard"] : ["easy", "medium", "hard"]),
+    [isVestibular]
+  );
+
   const [difficulty, setDifficulty] = useState<Difficulty | null>(null);
   const [currentExercise, setCurrentExercise] = useState<Exercise | null>(null);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
@@ -95,6 +106,21 @@ export default function Practice() {
 
   const exerciseTimer = useTimer({ initialTime: 0 });
   const subjectName = subject ? subjectNames[subject] || subject : "Disciplina";
+
+  const { data: plan, isLoading: planLoading } = useQuery({
+    queryKey: ["user-plan-practice", user?.id],
+    queryFn: () => profileApi.getPlan(),
+    enabled: !!user && isVestibular,
+    staleTime: 30_000,
+  });
+
+  const isPremiumUser = plan?.is_premium || plan?.plan === "premium";
+
+  useEffect(() => {
+    if (isVestibular && !planLoading && plan && !isPremiumUser) {
+      window.location.href = HOTMART_CHECKOUT_URL;
+    }
+  }, [isVestibular, planLoading, plan, isPremiumUser]);
 
   const resetExerciseState = useCallback(() => {
     setSelectedAnswer(null);
@@ -108,14 +134,29 @@ export default function Practice() {
     setLoading(true);
 
     try {
-      const apiExercise = await exercisesApi.getRandomExercise(subject, difficulty);
-      setCurrentExercise({
-        id: apiExercise.id,
-        question: apiExercise.question,
-        options: apiExercise.options || [],
-        correctAnswer: apiExercise.correct_answer,
-        explanation: apiExercise.explanation || "Sem explicacao disponivel.",
-      });
+      if (isVestibular) {
+        const page = await vestibularApi.getVestibularExercises(1, 0, difficulty);
+        const apiExercise = page.items[0];
+        if (!apiExercise) {
+          throw new Error("Nao ha mais exercicios vestibulares disponiveis para esse nivel.");
+        }
+        setCurrentExercise({
+          id: apiExercise.id,
+          question: apiExercise.question,
+          options: apiExercise.options || [],
+          correctAnswer: apiExercise.correct_answer,
+          explanation: "",
+        });
+      } else {
+        const apiExercise = await exercisesApi.getRandomExercise(subject, difficulty);
+        setCurrentExercise({
+          id: apiExercise.id,
+          question: apiExercise.question,
+          options: apiExercise.options || [],
+          correctAnswer: apiExercise.correct_answer,
+          explanation: apiExercise.explanation || "Sem explicacao disponivel.",
+        });
+      }
       resetExerciseState();
     } catch (error) {
       toast({
@@ -127,13 +168,43 @@ export default function Practice() {
     } finally {
       setLoading(false);
     }
-  }, [difficulty, subject, resetExerciseState, toast]);
+  }, [difficulty, subject, isVestibular, resetExerciseState, toast]);
 
   const handleSubmit = async () => {
-    if (!selectedAnswer || !currentExercise || !user) return;
+    if (!selectedAnswer || !currentExercise || !user || !subject) return;
+
+    exerciseTimer.pause();
+
+    if (isVestibular) {
+      try {
+        const result = await vestibularApi.submitVestibularAnswer(currentExercise.id, selectedAnswer);
+        setCurrentExercise((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            explanation: result.explanation || "Sem explicacao disponivel.",
+          };
+        });
+        setIsSubmitted(true);
+
+        toast({
+          title: result.correct ? "Resposta correta!" : "Resposta incorreta",
+          description: result.correct
+            ? `Parabens! Sua taxa atual no Vestibular e ${result.accuracy}%.`
+            : `A resposta correta era: ${currentExercise.correctAnswer}. Taxa atual: ${result.accuracy}%.`,
+          variant: result.correct ? "default" : "destructive",
+        });
+      } catch (error) {
+        toast({
+          variant: "destructive",
+          title: "Falha ao registrar resposta",
+          description: (error as Error).message || "Nao foi possivel salvar sua resposta.",
+        });
+      }
+      return;
+    }
 
     setIsSubmitted(true);
-    exerciseTimer.pause();
     const isCorrect = selectedAnswer === currentExercise.correctAnswer;
 
     try {
@@ -159,6 +230,14 @@ export default function Practice() {
       variant: isCorrect ? "default" : "destructive",
     });
   };
+
+  if (isVestibular && planLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   if (!difficulty) {
     return (
@@ -195,7 +274,7 @@ export default function Practice() {
             </div>
 
             <div className="grid gap-4">
-              {(Object.keys(difficultyCards) as Difficulty[]).map((diff) => {
+              {availableDifficulties.map((diff) => {
                 const card = difficultyCards[diff];
                 return (
                   <button

@@ -35,6 +35,20 @@ export interface AuthProfile {
   avatar_url: string | null;
 }
 
+export interface UserPlanProfile {
+  id: string;
+  email: string;
+  plan: string;
+  is_premium: boolean;
+  subscription_status: string;
+  payment_status: string;
+  free_uses: number;
+  uses_count: number;
+  hotmart_purchase_id: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface AuthSession {
   access_token: string;
   token_type: string;
@@ -317,6 +331,14 @@ export const profileApi = {
     }
     return response.json();
   },
+
+  async getPlan() {
+    const response = await fetchWithAuth("/profiles/plan");
+    if (!response.ok) {
+      return parseError(response, "Erro ao carregar plano");
+    }
+    return response.json() as Promise<UserPlanProfile>;
+  },
 };
 
 export const exercisesApi = {
@@ -380,5 +402,56 @@ export const attemptsApi = {
       return parseError(response, "Erro ao carregar progresso");
     }
     return response.json();
+  },
+};
+
+export const vestibularApi = {
+  async getVestibularExercises(limit = 10, offset = 0, difficulty = "medium") {
+    const response = await fetchWithAuth(
+      buildEndpoint("/vestibular/exercises", { limit, offset, difficulty })
+    );
+    if (!response.ok) {
+      return parseError(response, "Erro ao carregar exercicios vestibulares");
+    }
+    return response.json() as Promise<{
+      items: Array<{
+        id: string;
+        question: string;
+        options: string[];
+        correct_answer: string;
+        difficulty: string;
+        created_at: string;
+      }>;
+      limit: number;
+      offset: number;
+      has_more: boolean;
+    }>;
+  },
+
+  async submitVestibularAnswer(exercise_id: string, answer: string) {
+    const response = await fetchWithAuth("/vestibular/answer", {
+      method: "POST",
+      body: JSON.stringify({ exercise_id, answer }),
+    });
+    if (!response.ok) {
+      return parseError(response, "Erro ao enviar resposta vestibular");
+    }
+    return response.json() as Promise<{
+      correct: boolean;
+      explanation: string;
+      accuracy: number;
+    }>;
+  },
+
+  async getVestibularStats() {
+    const response = await fetchWithAuth("/vestibular/stats");
+    if (!response.ok) {
+      return parseError(response, "Erro ao carregar estatisticas vestibulares");
+    }
+    return response.json() as Promise<{
+      exercicios_feitos: number;
+      respostas_corretas: number;
+      taxa_acerto: number;
+    }>;
   },
 };
