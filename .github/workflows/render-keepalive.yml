@@ -1,0 +1,54 @@
+name: Render Keep-Alive
+
+on:
+  schedule:
+    # Executa a cada 10 minutos (UTC) para evitar sleep no Render Free (~15 min).
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      TARGET_URL: ${{ secrets.TARGET_URL }}
+    steps:
+      - name: Validate TARGET_URL
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "${TARGET_URL:-}" ]]; then
+            echo "[ERROR] Secret TARGET_URL is not configured."
+            exit 1
+          fi
+          echo "[INFO] Target: ${TARGET_URL}"
+
+      - name: Send keep-alive ping
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          TS="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          echo "[INFO] ${TS} - Sending GET to ${TARGET_URL}"
+
+          HTTP_CODE="$(curl -sS \
+            --location \
+            --max-time 20 \
+            --connect-timeout 10 \
+            --retry 2 \
+            --retry-delay 2 \
+            --retry-connrefused \
+            --write-out '%{http_code}' \
+            --output /tmp/keepalive_body.txt \
+            "${TARGET_URL}")"
+
+          if [[ "${HTTP_CODE}" -ge 200 && "${HTTP_CODE}" -lt 400 ]]; then
+            echo "[OK] Ping succeeded with HTTP ${HTTP_CODE}"
+            exit 0
+          fi
+
+          echo "[ERROR] Ping failed with HTTP ${HTTP_CODE}"
+          echo "[ERROR] Response body (first 300 chars):"
+          head -c 300 /tmp/keepalive_body.txt || true
+          echo
+          exit 1
