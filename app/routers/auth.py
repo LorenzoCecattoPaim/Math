@@ -1,17 +1,35 @@
 import logging
 import time
-from datetime import timedelta
+from datetime import datetime, timedelta
 from typing import Union
+from uuid import UUID
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, Response, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import joinedload
 from sqlalchemy.orm import Session
 
-from app.auth import create_access_token, get_current_user, hash_password, verify_password
-from app.config import EMAIL_VERIFICATION_EXPIRATION_MINUTES, FRONTEND_URL, PASSWORD_MIN_LENGTH
+from app.auth import (
+    create_access_token,
+    create_refresh_token,
+    decode_token,
+    get_current_user,
+    hash_password,
+    hash_refresh_token,
+    verify_password,
+)
+from app.config import (
+    EMAIL_VERIFICATION_EXPIRATION_MINUTES,
+    ENVIRONMENT,
+    FRONTEND_URL,
+    PASSWORD_MIN_LENGTH,
+    REFRESH_TOKEN_COOKIE_NAME,
+    REFRESH_TOKEN_COOKIE_PATH,
+    REFRESH_TOKEN_COOKIE_SAMESITE,
+    REFRESH_TOKEN_COOKIE_SECURE,
+)
 from app.database import get_db
-from app.models import Profile, User
+from app.models import Profile, RefreshSession, User
 from app.schemas import (
     AuthSessionResponse,
     EmailVerificationChallengeResponse,
@@ -43,6 +61,57 @@ from app.services.plan_service import ensure_user_plan_profile
 
 router = APIRouter(prefix="/auth", tags=["Autenticacao"])
 logger = logging.getLogger(__name__)
+
+_ALLOWED_SAMESITE = {"lax", "strict", "none"}
+_refresh_cookie_samesite = (
+    REFRESH_TOKEN_COOKIE_SAMESITE if REFRESH_TOKEN_COOKIE_SAMESITE in _ALLOWED_SAMESITE else "lax"
+)
+_refresh_cookie_secure = REFRESH_TOKEN_COOKIE_SECURE and ENVIRONMENT not in {"development", "test"}
+
+
+def _set_refresh_cookie(response: Response, token: str, max_age_seconds: int) -> None:
+    response.set_cookie(
+        key=REFRESH_TOKEN_COOKIE_NAME,
+        value=token,
+        httponly=True,
+        secure=_refresh_cookie_secure,
+        samesite=_refresh_cookie_samesite,
+        max_age=max_age_seconds,
+        path=REFRESH_TOKEN_COOKIE_PATH,
+    )
+
+
+def _clear_refresh_cookie(response: Response) -> None:
+    response.delete_cookie(
+        key=REFRESH_TOKEN_COOKIE_NAME,
+        path=REFRESH_TOKEN_COOKIE_PATH,
+        httponly=True,
+        secure=_refresh_cookie_secure,
+        samesite=_refresh_cookie_samesite,
+    )
+
+
+def _issue_refresh_session(
+    *,
+    response: Response,
+    db: Session,
+    user: User,
+    request_ip: str | None,
+) -> None:
+    raw_refresh_token, expires_at = create_refresh_token()
+    refresh_session = RefreshSession(
+        user_id=user.id,
+        token_hash=hash_refresh_token(raw_refresh_token),
+        expires_at=expires_at,
+        request_ip=request_ip,
+    )
+    db.add(refresh_session)
+    db.commit()
+    _set_refresh_cookie(
+        response,
+        raw_refresh_token,
+        max_age_seconds=max(int((expires_at - datetime.utcnow()).total_seconds()), 0),
+    )
 
 
 @router.post("/signup", response_model=Union[AuthSessionResponse, EmailVerificationChallengeResponse])
@@ -133,6 +202,7 @@ def signup(
 
 @router.post("/login", response_model=Union[AuthSessionResponse, EmailVerificationChallengeResponse])
 def login(
+    response: Response,
     request: Request,
     background_tasks: BackgroundTasks,
     form_data: OAuth2PasswordRequestForm = Depends(),
@@ -188,6 +258,12 @@ def login(
         )
 
     access_token = create_access_token(data={"sub": str(user.id)})
+    _issue_refresh_session(
+        response=response,
+        db=db,
+        user=user,
+        request_ip=request.client.host if request.client else None,
+    )
     logger.info(
         "auth_login_success user_id=%s duration_ms=%.2f",
         str(user.id),
@@ -251,19 +327,133 @@ def resend_code(
 
 
 @router.post("/verify-email-code", response_model=TokenResponse)
-def verify_email_code(payload: VerifyEmailCodeRequest, db: Session = Depends(get_db)):
+def verify_email_code(
+    payload: VerifyEmailCodeRequest,
+    response: Response,
+    request: Request,
+    db: Session = Depends(get_db),
+):
     access_token = verify_email_code_and_issue_token(
         pending_token=payload.pending_token,
         code=payload.code,
         db=db,
     )
+    payload_data = decode_token(access_token, expected_type="access")
+    if payload_data is None or payload_data.get("sub") is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token invalido")
+    try:
+        user_id = UUID(str(payload_data["sub"]))
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token invalido") from exc
+    user = db.query(User).filter(User.id == user_id).first()
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario nao encontrado")
+    _issue_refresh_session(
+        response=response,
+        db=db,
+        user=user,
+        request_ip=request.client.host if request.client else None,
+    )
     return TokenResponse(access_token=access_token)
 
 
 @router.post("/verify-email-link", response_model=TokenResponse)
-def verify_email_link(payload: VerifyEmailLinkRequest, db: Session = Depends(get_db)):
+def verify_email_link(
+    payload: VerifyEmailLinkRequest,
+    response: Response,
+    request: Request,
+    db: Session = Depends(get_db),
+):
     access_token = verify_email_magic_link_and_issue_token(payload.magic_token, db)
+    payload_data = decode_token(access_token, expected_type="access")
+    if payload_data is None or payload_data.get("sub") is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token invalido")
+    try:
+        user_id = UUID(str(payload_data["sub"]))
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token invalido") from exc
+    user = db.query(User).filter(User.id == user_id).first()
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario nao encontrado")
+    _issue_refresh_session(
+        response=response,
+        db=db,
+        user=user,
+        request_ip=request.client.host if request.client else None,
+    )
     return TokenResponse(access_token=access_token)
+
+
+@router.post("/refresh", response_model=TokenResponse)
+def refresh_session(
+    request: Request,
+    response: Response,
+    db: Session = Depends(get_db),
+):
+    refresh_token = request.cookies.get(REFRESH_TOKEN_COOKIE_NAME)
+    if not refresh_token:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Sessao expirada")
+
+    refresh_token_hash = hash_refresh_token(refresh_token)
+    current_session = (
+        db.query(RefreshSession)
+        .filter(RefreshSession.token_hash == refresh_token_hash)
+        .first()
+    )
+    if (
+        current_session is None
+        or current_session.revoked_at is not None
+        or current_session.expires_at <= datetime.utcnow()
+    ):
+        if current_session and current_session.user_id:
+            db.query(RefreshSession).filter(RefreshSession.user_id == current_session.user_id).update(
+                {"revoked_at": datetime.utcnow()}
+            )
+            db.commit()
+        _clear_refresh_cookie(response)
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Sessao expirada")
+
+    user = db.query(User).filter(User.id == current_session.user_id).first()
+    if user is None:
+        current_session.revoked_at = datetime.utcnow()
+        db.commit()
+        _clear_refresh_cookie(response)
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Sessao expirada")
+
+    current_session.revoked_at = datetime.utcnow()
+    current_session.last_used_at = datetime.utcnow()
+    db.commit()
+
+    access_token = create_access_token(data={"sub": str(user.id)})
+    _issue_refresh_session(
+        response=response,
+        db=db,
+        user=user,
+        request_ip=request.client.host if request.client else None,
+    )
+    return TokenResponse(access_token=access_token)
+
+
+@router.post("/logout")
+def logout(
+    request: Request,
+    response: Response,
+    db: Session = Depends(get_db),
+):
+    refresh_token = request.cookies.get(REFRESH_TOKEN_COOKIE_NAME)
+    if refresh_token:
+        refresh_token_hash = hash_refresh_token(refresh_token)
+        session = (
+            db.query(RefreshSession)
+            .filter(RefreshSession.token_hash == refresh_token_hash)
+            .first()
+        )
+        if session and session.revoked_at is None:
+            session.revoked_at = datetime.utcnow()
+            db.commit()
+
+    _clear_refresh_cookie(response)
+    return {"message": "Logout realizado com sucesso."}
 
 
 @router.post("/forgot-password", response_model=ForgotPasswordResponse)

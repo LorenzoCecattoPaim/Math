@@ -118,6 +118,20 @@ CREATE TABLE IF NOT EXISTS public.password_reset_tokens (
 );
 
 -- ============================================
+-- Tabela de Sessoes de Refresh Token
+-- ============================================
+CREATE TABLE IF NOT EXISTS public.refresh_sessions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+    token_hash VARCHAR(255) NOT NULL UNIQUE,
+    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    revoked_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    last_used_at TIMESTAMP WITH TIME ZONE,
+    request_ip VARCHAR(64)
+);
+
+-- ============================================
 -- Tabela de Plano e Consumo do Usuario
 -- ============================================
 CREATE TABLE IF NOT EXISTS public.users_profile (
@@ -155,6 +169,10 @@ ALTER TABLE public.users_profile ADD COLUMN IF NOT EXISTS created_at TIMESTAMP W
 ALTER TABLE public.users_profile ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
 ALTER TABLE public.email_verification_codes ADD COLUMN IF NOT EXISTS request_ip VARCHAR(64);
 ALTER TABLE public.password_reset_tokens ADD COLUMN IF NOT EXISTS request_ip VARCHAR(64);
+ALTER TABLE public.refresh_sessions ADD COLUMN IF NOT EXISTS revoked_at TIMESTAMP WITH TIME ZONE;
+ALTER TABLE public.refresh_sessions ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
+ALTER TABLE public.refresh_sessions ADD COLUMN IF NOT EXISTS last_used_at TIMESTAMP WITH TIME ZONE;
+ALTER TABLE public.refresh_sessions ADD COLUMN IF NOT EXISTS request_ip VARCHAR(64);
 DO $$
 BEGIN
     IF EXISTS (
@@ -202,6 +220,9 @@ CREATE INDEX IF NOT EXISTS idx_password_reset_user_id ON public.password_reset_t
 CREATE INDEX IF NOT EXISTS idx_password_reset_token_hash ON public.password_reset_tokens(token_hash);
 CREATE INDEX IF NOT EXISTS idx_password_reset_expires_at ON public.password_reset_tokens(expires_at);
 CREATE INDEX IF NOT EXISTS idx_password_reset_request_ip ON public.password_reset_tokens(request_ip);
+CREATE INDEX IF NOT EXISTS idx_refresh_sessions_user_id ON public.refresh_sessions(user_id);
+CREATE INDEX IF NOT EXISTS idx_refresh_sessions_token_hash ON public.refresh_sessions(token_hash);
+CREATE INDEX IF NOT EXISTS idx_refresh_sessions_expires_at ON public.refresh_sessions(expires_at);
 
 -- ============================================
 -- RLS Vestibulares

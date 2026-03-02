@@ -4,15 +4,10 @@ const DEFAULT_TIMEOUT_MS = Number(import.meta.env.VITE_API_TIMEOUT_MS ?? 90000);
 const HOTMART_CHECKOUT_URL =
   import.meta.env.VITE_HOTMART_CHECKOUT_URL || "https://provalab-launchpad.vercel.app";
 
-let accessToken: string | null = localStorage.getItem("access_token");
+let accessToken: string | null = null;
 
 export function setAccessToken(token: string | null) {
   accessToken = token;
-  if (token) {
-    localStorage.setItem("access_token", token);
-  } else {
-    localStorage.removeItem("access_token");
-  }
 }
 
 export function getAccessToken() {
@@ -139,23 +134,101 @@ async function fetchWithAuth(
     headers["Content-Type"] = "application/json";
   }
 
-  const response = await fetchWithTimeout(`${API_BASE_URL}${endpoint}`, {
+  const requestOptions: RequestInit = {
     ...options,
+    credentials: "include",
     headers,
-  }, timeoutMs);
+  };
+
+  let response = await fetchWithTimeout(`${API_BASE_URL}${endpoint}`, requestOptions, timeoutMs);
 
   if (response.status === 401) {
-    setAccessToken(null);
-    throw new Error("UNAUTHORIZED");
+    const refreshed = await authApi.refreshSession();
+    if (!refreshed) {
+      setAccessToken(null);
+      throw new Error("UNAUTHORIZED");
+    }
+
+    const retryHeaders: Record<string, string> = {
+      ...(options.headers as Record<string, string>),
+    };
+    if (accessToken) {
+      retryHeaders.Authorization = `Bearer ${accessToken}`;
+    }
+    if (options.body && !retryHeaders["Content-Type"]) {
+      retryHeaders["Content-Type"] = "application/json";
+    }
+
+    response = await fetchWithTimeout(
+      `${API_BASE_URL}${endpoint}`,
+      {
+        ...options,
+        credentials: "include",
+        headers: retryHeaders,
+      },
+      timeoutMs
+    );
+
+    if (response.status === 401) {
+      setAccessToken(null);
+      throw new Error("UNAUTHORIZED");
+    }
   }
 
   return response;
 }
 
+let refreshInFlight: Promise<boolean> | null = null;
+
 export const authApi = {
+  async refreshSession() {
+    if (refreshInFlight) {
+      return refreshInFlight;
+    }
+
+    refreshInFlight = (async () => {
+      const response = await fetchWithTimeout(
+        `${API_BASE_URL}/auth/refresh`,
+        {
+          method: "POST",
+          credentials: "include",
+        },
+        Math.max(DEFAULT_TIMEOUT_MS, 180000)
+      );
+
+      if (!response.ok) {
+        setAccessToken(null);
+        return false;
+      }
+
+      const data = (await response.json()) as { access_token: string };
+      if (!data.access_token) {
+        setAccessToken(null);
+        return false;
+      }
+
+      setAccessToken(data.access_token);
+      return true;
+    })();
+
+    try {
+      return await refreshInFlight;
+    } finally {
+      refreshInFlight = null;
+    }
+  },
+
+  async bootstrapSession() {
+    if (accessToken) {
+      return true;
+    }
+    return authApi.refreshSession();
+  },
+
   async signup(email: string, password: string, confirmPassword: string, fullName: string) {
     const response = await fetchWithTimeout(`${API_BASE_URL}/auth/signup`, {
       method: "POST",
+      credentials: "include",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         email,
@@ -183,6 +256,7 @@ export const authApi = {
 
     const response = await fetchWithTimeout(`${API_BASE_URL}/auth/login`, {
       method: "POST",
+      credentials: "include",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: formData,
     });
@@ -201,6 +275,7 @@ export const authApi = {
   async googleAuth(googleAccessToken: string) {
     const response = await fetchWithTimeout(`${API_BASE_URL}/auth/google`, {
       method: "POST",
+      credentials: "include",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ access_token: googleAccessToken }),
     }, Math.max(DEFAULT_TIMEOUT_MS, 180000));
@@ -221,6 +296,7 @@ export const authApi = {
   async verifyEmailCode(pendingToken: string, code: string) {
     const response = await fetchWithTimeout(`${API_BASE_URL}/auth/verify-email-code`, {
       method: "POST",
+      credentials: "include",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ pending_token: pendingToken, code }),
     }, Math.max(DEFAULT_TIMEOUT_MS, 180000));
@@ -237,6 +313,7 @@ export const authApi = {
   async verifyEmailMagicLink(magicToken: string) {
     const response = await fetchWithTimeout(`${API_BASE_URL}/auth/verify-email-link`, {
       method: "POST",
+      credentials: "include",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ magic_token: magicToken }),
     }, Math.max(DEFAULT_TIMEOUT_MS, 180000));
@@ -308,6 +385,10 @@ export const authApi = {
   },
 
   logout() {
+    void fetchWithTimeout(`${API_BASE_URL}/auth/logout`, {
+      method: "POST",
+      credentials: "include",
+    });
     setAccessToken(null);
   },
 };

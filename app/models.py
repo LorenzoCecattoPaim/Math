@@ -63,6 +63,9 @@ class User(Base):
     password_reset_tokens = relationship(
         "PasswordResetToken", back_populates="user", cascade="all, delete-orphan"
     )
+    refresh_sessions = relationship(
+        "RefreshSession", back_populates="user", cascade="all, delete-orphan"
+    )
 
 class Profile(Base):
     __tablename__ = "profiles"
@@ -193,6 +196,23 @@ class PasswordResetToken(Base):
     request_ip = Column(String(64), nullable=True)
 
     user = relationship("User", back_populates="password_reset_tokens")
+
+
+class RefreshSession(Base):
+    __tablename__ = "refresh_sessions"
+
+    id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(
+        Uuid(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    token_hash = Column(String(255), nullable=False, unique=True, index=True)
+    expires_at = Column(DateTime, nullable=False)
+    revoked_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    last_used_at = Column(DateTime, nullable=True)
+    request_ip = Column(String(64), nullable=True)
+
+    user = relationship("User", back_populates="refresh_sessions")
 
 
 class UserProfile(Base):

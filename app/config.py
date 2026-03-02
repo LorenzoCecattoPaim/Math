@@ -10,7 +10,15 @@ DB_POOL_TIMEOUT_SECONDS = int(os.getenv("DB_POOL_TIMEOUT_SECONDS", "10"))
 DB_POOL_RECYCLE_SECONDS = int(os.getenv("DB_POOL_RECYCLE_SECONDS", "1800"))
 JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "supersecretkey_change_in_production_minimum_32_chars")
 JWT_ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
-JWT_EXPIRE_MINUTES = int(os.getenv("JWT_EXPIRE_MINUTES", "1440"))  # 24 hours
+JWT_EXPIRE_MINUTES = int(os.getenv("JWT_EXPIRE_MINUTES", "60"))  # 1 hour (legacy var)
+JWT_ACCESS_EXPIRE_MINUTES = int(
+    os.getenv("JWT_ACCESS_EXPIRE_MINUTES", str(JWT_EXPIRE_MINUTES))
+)
+JWT_REFRESH_EXPIRE_DAYS = int(os.getenv("JWT_REFRESH_EXPIRE_DAYS", "7"))
+REFRESH_TOKEN_COOKIE_NAME = os.getenv("REFRESH_TOKEN_COOKIE_NAME", "refresh_token")
+REFRESH_TOKEN_COOKIE_SECURE = os.getenv("REFRESH_TOKEN_COOKIE_SECURE", "true").lower() == "true"
+REFRESH_TOKEN_COOKIE_SAMESITE = os.getenv("REFRESH_TOKEN_COOKIE_SAMESITE", "lax").lower()
+REFRESH_TOKEN_COOKIE_PATH = os.getenv("REFRESH_TOKEN_COOKIE_PATH", "/")
 ENVIRONMENT = os.getenv("ENVIRONMENT", "development").strip().lower()
 
 BACKEND_CORS_ORIGINS = [

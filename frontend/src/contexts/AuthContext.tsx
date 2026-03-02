@@ -87,15 +87,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     let isMounted = true;
 
     const checkAuth = async () => {
-      const token = getAccessToken();
-      if (!token) {
-        if (isMounted) {
-          setLoading(false);
-        }
-        return;
-      }
-
       try {
+        const token = getAccessToken();
+        if (!token) {
+          const restored = await authApi.bootstrapSession();
+          if (!restored) {
+            if (isMounted) {
+              setLoading(false);
+            }
+            return;
+          }
+        }
         await syncAuthenticatedUser();
       } catch {
         setAccessToken(null);

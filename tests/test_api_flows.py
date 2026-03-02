@@ -86,6 +86,40 @@ def test_login_returns_access_token(client, db_session):
     assert body["token_type"] == "bearer"
     assert isinstance(body["access_token"], str)
     assert body["user"]["email"] == email
+    assert "refresh_token=" in response.headers.get("set-cookie", "")
+
+
+def test_refresh_rotates_refresh_cookie(client, db_session):
+    email = "refresh@example.com"
+    password = "secret123"
+    _create_verified_user(db_session, email=email, password=password)
+
+    login = client.post(
+        "/auth/login",
+        data={"username": email, "password": password},
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
+    )
+    assert login.status_code == 200
+    first_cookie = login.headers.get("set-cookie", "")
+    assert "refresh_token=" in first_cookie
+
+    refresh = client.post("/auth/refresh")
+    assert refresh.status_code == 200
+    refreshed = refresh.json()
+    assert isinstance(refreshed["access_token"], str)
+    assert "refresh_token=" in refresh.headers.get("set-cookie", "")
+
+    me = client.get(
+        "/auth/me",
+        headers={"Authorization": f"Bearer {refreshed['access_token']}"},
+    )
+    assert me.status_code == 200
+    assert me.json()["email"] == email
+
+
+def test_refresh_without_cookie_returns_401(client):
+    response = client.post("/auth/refresh")
+    assert response.status_code == 401
 
 
 def test_create_exercise(client, db_session):
