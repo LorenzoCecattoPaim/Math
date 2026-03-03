@@ -40,15 +40,15 @@ export default function Register() {
     if (error || !data) {
       toast({
         variant: "destructive",
-        title: "Erro ao iniciar verificacao",
-        description: error?.message || "Nao foi possivel continuar com Google.",
+        title: "Erro ao iniciar verificação",
+        description: error?.message || "Não foi possível continuar com o Google.",
       });
       return;
     }
 
     toast({
-      title: "Codigo enviado",
-      description: `Verifique o email ${data.email} para concluir o acesso.`,
+      title: "Código enviado",
+      description: `Verifique o e-mail ${data.email} para concluir o acesso.`,
     });
 
     const params = new URLSearchParams({
@@ -76,7 +76,7 @@ export default function Register() {
       toast({
         variant: "destructive",
         title: "Senhas diferentes",
-        description: "Senha e confirmacao precisam ser identicas.",
+        description: "Senha e confirmação precisam ser idênticas.",
       });
       setLoading(false);
       return;
@@ -88,11 +88,11 @@ export default function Register() {
       toast({
         variant: "destructive",
         title: "Erro ao criar conta",
-        description: error.message || "Nao foi possivel criar sua conta.",
+        description: error.message || "Não foi possível criar sua conta.",
       });
     } else if (verification) {
       toast({
-        title: "Verificacao necessaria",
+        title: "Verificação necessária",
         description: verification.message,
       });
       const params = new URLSearchParams({
@@ -103,7 +103,7 @@ export default function Register() {
     } else {
       toast({
         title: "Conta criada com sucesso",
-        description: "Voce ja pode acessar sua conta.",
+        description: "Você já pode acessar sua conta.",
       });
       navigate("/dashboard");
     }
@@ -120,7 +120,7 @@ export default function Register() {
             className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-8 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
-            Voltar ao inicio
+            Voltar ao início
           </Link>
 
           <div className="mb-8">
@@ -162,7 +162,7 @@ export default function Register() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">E-mail</Label>
               <Input
                 id="email"
                 type="email"
@@ -189,7 +189,7 @@ export default function Register() {
                 className="h-12"
               />
               <p className={passwordTooShort ? "text-xs text-destructive" : "text-xs text-muted-foreground"}>
-                Minimo de {passwordMinLength} caracteres
+                Mínimo de {passwordMinLength} caracteres
               </p>
             </div>
 
@@ -207,7 +207,7 @@ export default function Register() {
                 className="h-12"
               />
               {passwordsDoNotMatch ? (
-                <p className="text-xs text-destructive">As senhas nao coincidem.</p>
+                <p className="text-xs text-destructive">As senhas não coincidem.</p>
               ) : (
                 <p className="text-xs text-muted-foreground">Repita a mesma senha.</p>
               )}
@@ -232,7 +232,7 @@ export default function Register() {
           </form>
 
           <p className="mt-8 text-center text-muted-foreground">
-            Ja tem uma conta?{" "}
+            Já tem uma conta?{" "}
             <Link to="/login" className="text-primary font-medium hover:underline">
               Entrar
             </Link>
@@ -247,7 +247,7 @@ export default function Register() {
           </div>
           <h2 className="text-4xl font-bold mb-4 text-center">ProvaLab</h2>
           <p className="text-xl text-white/80 text-center max-w-md">
-            Pratique, aprenda e evolua com exercicios personalizados.
+            Pratique, aprenda e evolua com exercícios personalizados.
           </p>
         </div>
       </div>

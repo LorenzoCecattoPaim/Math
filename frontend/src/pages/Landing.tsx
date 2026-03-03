@@ -34,7 +34,7 @@ function Header() {
               <Link to="/login">Entrar</Link>
             </Button>
             <Button variant="default" size="sm" asChild>
-              <Link to="/register">Cadastrar</Link>
+              <Link to="/register">Criar conta</Link>
             </Button>
           </div>
         </div>
@@ -64,16 +64,16 @@ function Hero() {
             className="text-5xl md:text-7xl font-extrabold mb-6 leading-tight animate-fade-in"
             style={{ animationDelay: "0.1s" }}
           >
-            Pratique, <span className="gradient-text">Aprenda</span> e{" "}
-            <span className="gradient-text">Evolua</span>
+            Pratique, <span className="gradient-text">aprenda</span> e{" "}
+            <span className="gradient-text">evolua</span>
           </h1>
 
           <p
             className="text-xl md:text-2xl text-muted-foreground mb-10 max-w-2xl mx-auto animate-fade-in"
             style={{ animationDelay: "0.2s" }}
           >
-            Exercicios personalizados, correcao automatica e acompanhamento do seu progresso.
-            Sua jornada de aprendizado comeca aqui.
+            Exercícios personalizados, correção automática e acompanhamento do seu progresso.
+            Sua jornada de aprendizado começa aqui.
           </p>
 
           <div
@@ -82,12 +82,12 @@ function Hero() {
           >
             <Button variant="hero" size="xl" asChild>
               <Link to="/register">
-                Comecar Gratuitamente
+                Começar gratuitamente
                 <ArrowRight className="w-5 h-5" />
               </Link>
             </Button>
             <Button variant="outline" size="xl" asChild>
-              <Link to="/login">Ja tenho conta</Link>
+              <Link to="/login">Já tenho conta</Link>
             </Button>
           </div>
 
@@ -99,19 +99,19 @@ function Hero() {
               <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
                 <BookOpen className="w-5 h-5 text-primary" />
               </div>
-              <span className="font-medium">Multiplas Disciplinas</span>
+              <span className="font-medium">Múltiplas disciplinas</span>
             </div>
             <div className="flex items-center gap-3 justify-center p-4 rounded-xl bg-card/50 backdrop-blur border border-border/50">
               <div className="w-10 h-10 rounded-lg bg-secondary/10 flex items-center justify-center">
                 <Target className="w-5 h-5 text-secondary" />
               </div>
-              <span className="font-medium">Correcao Instantanea</span>
+              <span className="font-medium">Correção instantânea</span>
             </div>
             <div className="flex items-center gap-3 justify-center p-4 rounded-xl bg-card/50 backdrop-blur border border-border/50">
               <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center">
                 <TrendingUp className="w-5 h-5 text-accent" />
               </div>
-              <span className="font-medium">Historico Completo</span>
+              <span className="font-medium">Histórico completo</span>
             </div>
           </div>
         </div>
@@ -124,36 +124,36 @@ function Features() {
   const features = [
     {
       icon: Brain,
-      title: "Exercicios Dinamicos",
-      description: "Geracao automatica de questoes adaptadas ao seu nivel.",
+      title: "Exercícios dinâmicos",
+      description: "Geração automática de questões adaptadas ao seu nível.",
       iconContainerClass: "bg-primary/10",
       iconClass: "text-primary",
     },
     {
       icon: Zap,
-      title: "Correcao Instantanea",
+      title: "Correção instantânea",
       description: "Receba feedback imediato sobre suas respostas.",
       iconContainerClass: "bg-secondary/10",
       iconClass: "text-secondary",
     },
     {
       icon: BarChart3,
-      title: "Acompanhe seu Progresso",
-      description: "Visualize sua evolucao com estatisticas completas.",
+      title: "Acompanhe seu progresso",
+      description: "Visualize sua evolução com estatísticas completas.",
       iconContainerClass: "bg-accent/10",
       iconClass: "text-accent",
     },
     {
       icon: BookMarked,
-      title: "Multiplas Disciplinas",
-      description: "Algebra, Geometria, Calculo e muito mais.",
+      title: "Múltiplas disciplinas",
+      description: "Álgebra, Geometria, Cálculo e muito mais.",
       iconContainerClass: "bg-primary/10",
       iconClass: "text-primary",
     },
     {
       icon: CheckCircle,
-      title: "Niveis de Dificuldade",
-      description: "Escolha entre facil, medio e dificil.",
+      title: "Níveis de dificuldade",
+      description: "Escolha entre fácil, médio e difícil.",
       iconContainerClass: "bg-secondary/10",
       iconClass: "text-secondary",
     },
@@ -171,7 +171,7 @@ function Features() {
       <div className="container px-4">
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-bold mb-4">
-            Tudo que voce precisa para <span className="gradient-text">aprender melhor</span>
+            Tudo o que você precisa para <span className="gradient-text">aprender melhor</span>
           </h2>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
             Uma plataforma completa para maximizar seu aprendizado.
@@ -213,11 +213,11 @@ function CTA() {
             Pronto para transformar sua forma de estudar?
           </h2>
           <p className="text-xl text-white/80 mb-10">
-            Junte-se a estudantes que ja estao evoluindo com o ProvaLab.
+            Junte-se a estudantes que já estão evoluindo com o ProvaLab.
           </p>
           <Button size="xl" className="bg-white text-primary hover:bg-white/90 shadow-xl" asChild>
             <Link to="/register">
-              Criar Conta Gratuita
+              Criar conta gratuita
               <ArrowRight className="w-5 h-5" />
             </Link>
           </Button>

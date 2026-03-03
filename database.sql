@@ -91,7 +91,7 @@ CREATE TABLE IF NOT EXISTS public.user_vestibular_progress (
 );
 
 -- ============================================
--- Tabela de CÃ³digos de VerificaÃ§Ã£o de Email
+-- Tabela de Códigos de Verificação de E-mail
 -- ============================================
 CREATE TABLE IF NOT EXISTS public.email_verification_codes (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

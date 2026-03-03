@@ -24,16 +24,16 @@ const HOTMART_CHECKOUT_URL =
   import.meta.env.VITE_HOTMART_CHECKOUT_URL || "https://provalab-launchpad.vercel.app";
 
 const subjects = [
-  { id: "algebra", name: "Algebra", subtitle: "Clique para praticar", icon: Calculator, color: "primary" },
+  { id: "algebra", name: "Álgebra", subtitle: "Clique para praticar", icon: Calculator, color: "primary" },
   { id: "geometry", name: "Geometria", subtitle: "Clique para praticar", icon: Atom, color: "secondary" },
-  { id: "calculus", name: "Calculo", subtitle: "Clique para praticar", icon: FlaskConical, color: "accent" },
-  { id: "statistics", name: "Estatistica", subtitle: "Clique para praticar", icon: Leaf, color: "success" },
+  { id: "calculus", name: "Cálculo", subtitle: "Clique para praticar", icon: FlaskConical, color: "accent" },
+  { id: "statistics", name: "Estatística", subtitle: "Clique para praticar", icon: Leaf, color: "success" },
   { id: "trigonometry", name: "Trigonometria", subtitle: "Clique para praticar", icon: BookOpen, color: "primary" },
-  { id: "arithmetic", name: "Aritmetica", subtitle: "Clique para praticar", icon: Languages, color: "secondary" },
+  { id: "arithmetic", name: "Aritmética", subtitle: "Clique para praticar", icon: Languages, color: "secondary" },
   {
     id: "vestibular",
     name: "Vestibulares",
-    subtitle: "Questoes avancadas",
+    subtitle: "Questões avançadas",
     icon: Shield,
     color: "accent",
     requiresPremium: true,
@@ -121,7 +121,7 @@ export default function Dashboard() {
               </Link>
               <Link to="/history">
                 <Button variant="ghost" size="sm">
-                  Historico
+                  Histórico
                 </Button>
               </Link>
               <Link to="/support">
@@ -141,8 +141,8 @@ export default function Dashboard() {
 
       <main className="container px-4 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Ola, {profile?.full_name || "Estudante"}!</h1>
-          <p className="text-muted-foreground">Escolha uma disciplina para comecar a praticar.</p>
+          <h1 className="text-3xl font-bold mb-2">Olá, {profile?.full_name || "Estudante"}!</h1>
+          <p className="text-muted-foreground">Escolha uma disciplina para começar a praticar.</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-10">
@@ -153,7 +153,7 @@ export default function Dashboard() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{statsLoading ? "..." : stats?.total || 0}</p>
-                <p className="text-sm text-muted-foreground">Exercicios feitos</p>
+                <p className="text-sm text-muted-foreground">Exercícios feitos</p>
               </div>
             </div>
           </div>
@@ -192,7 +192,7 @@ export default function Dashboard() {
                   <p className="text-2xl font-bold">
                     {vestibularStatsLoading ? "..." : vestibularStats?.exercicios_feitos || 0}
                   </p>
-                  <p className="text-sm text-muted-foreground">Exercicios Vestibulares feitos</p>
+                  <p className="text-sm text-muted-foreground">Exercícios vestibulares feitos</p>
                 </div>
               </div>
             </div>
@@ -208,7 +208,7 @@ export default function Dashboard() {
                   <p className="text-2xl font-bold">
                     {vestibularStatsLoading ? "..." : `${vestibularStats?.taxa_acerto || 0}%`}
                   </p>
-                  <p className="text-sm text-muted-foreground">Taxa de acerto Vestibulares</p>
+                  <p className="text-sm text-muted-foreground">Taxa de acerto em vestibulares</p>
                 </div>
               </div>
             </div>

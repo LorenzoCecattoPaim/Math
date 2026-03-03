@@ -35,15 +35,15 @@ export default function Login() {
     if (error || !data) {
       toast({
         variant: "destructive",
-        title: "Erro ao iniciar verificacao",
-        description: error?.message || "Nao foi possivel continuar com Google.",
+        title: "Erro ao iniciar verificação",
+        description: error?.message || "Não foi possível continuar com o Google.",
       });
       return;
     }
 
     toast({
-      title: "Codigo enviado",
-      description: `Enviamos um codigo para ${data.email}.`,
+      title: "Código enviado",
+      description: `Enviamos um código para ${data.email}.`,
     });
 
     const params = new URLSearchParams({
@@ -67,7 +67,7 @@ export default function Login() {
       });
     } else if (verification) {
       toast({
-        title: "Verificacao necessaria",
+        title: "Verificação necessária",
         description: verification.message,
       });
       const params = new URLSearchParams({
@@ -91,7 +91,7 @@ export default function Login() {
             className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-8 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
-            Voltar ao inicio
+            Voltar ao início
           </Link>
 
           <div className="mb-8">
@@ -119,7 +119,7 @@ export default function Login() {
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">E-mail</Label>
               <Input
                 id="email"
                 type="email"
@@ -170,7 +170,7 @@ export default function Login() {
           </form>
 
           <p className="mt-8 text-center text-muted-foreground">
-            Nao tem uma conta?{" "}
+            Não tem uma conta?{" "}
             <Link to="/register" className="text-primary font-medium hover:underline">
               Cadastre-se
             </Link>
@@ -185,7 +185,7 @@ export default function Login() {
           </div>
           <h2 className="text-4xl font-bold mb-4 text-center">ProvaLab</h2>
           <p className="text-xl text-white/80 text-center max-w-md">
-            Pratique, aprenda e evolua com exercicios personalizados.
+            Pratique, aprenda e evolua com exercícios personalizados.
           </p>
         </div>
       </div>

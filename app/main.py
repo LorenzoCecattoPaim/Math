@@ -1,8 +1,10 @@
 import logging
 import time
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
+
 from app.database import engine, Base
 from app.config import AUTO_CREATE_TABLES, BACKEND_CORS_ORIGINS
 from app.exceptions import FreeLimitReachedError
@@ -14,12 +16,11 @@ if AUTO_CREATE_TABLES:
 app = FastAPI(
     title="ProvaLab API",
     description="API para plataforma de exercícios educacionais",
-    version="1.0.0"
+    version="1.0.0",
 )
 
-from fastapi.responses import Response
-
 logger = logging.getLogger(__name__)
+
 
 @app.options("/{path:path}")
 async def options_handler(path: str):
@@ -59,6 +60,7 @@ async def free_limit_reached_handler(
         },
     )
 
+
 # Configurar CORS
 cors_allow_credentials = "*" not in BACKEND_CORS_ORIGINS
 
@@ -78,13 +80,15 @@ app.include_router(attempts.router)
 app.include_router(hotmart.router)
 app.include_router(vestibular.router)
 
+
 @app.get("/")
 def root():
     return {
         "message": "ProvaLab API",
         "version": "1.0.0",
-        "docs": "/docs"
+        "docs": "/docs",
     }
+
 
 @app.get("/health")
 def health():

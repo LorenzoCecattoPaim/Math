@@ -34,10 +34,10 @@ from app.services.plan_service import ensure_user_plan_profile
 logger = logging.getLogger(__name__)
 
 GENERIC_FORGOT_PASSWORD_MESSAGE = (
-    "Se o email informado estiver cadastrado, enviaremos instrucoes de redefinicao."
+    "Se o e-mail informado estiver cadastrado, enviaremos instruções de redefinição."
 )
 GENERIC_RESEND_CODE_MESSAGE = (
-    "Se a solicitacao ainda estiver valida, enviaremos um novo codigo em instantes."
+    "Se a solicitação ainda estiver válida, enviaremos um novo código em instantes."
 )
 
 
@@ -144,7 +144,7 @@ def _enforce_email_verification_resend_limits(
         if ip_attempts >= VERIFICATION_RESEND_MAX_PER_HOUR:
             raise HTTPException(
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                detail="Muitas solicitacoes deste IP. Tente novamente mais tarde.",
+            detail="Muitas solicitações deste IP. Tente novamente mais tarde.",
             )
 
     latest_for_user = (
@@ -175,7 +175,7 @@ def _enforce_email_verification_resend_limits(
     if retry_after > 0:
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-            detail=f"Aguarde {retry_after}s para solicitar um novo codigo.",
+            detail=f"Aguarde {retry_after}s para solicitar um novo código.",
         )
 
 
@@ -198,7 +198,7 @@ def _enforce_password_reset_limits(
     if user_attempts >= PASSWORD_RESET_MAX_PER_HOUR:
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-            detail="Limite de solicitacoes atingido. Tente novamente mais tarde.",
+            detail="Limite de solicitações atingido. Tente novamente mais tarde.",
         )
 
     if request_ip:
@@ -214,7 +214,7 @@ def _enforce_password_reset_limits(
         if ip_attempts >= PASSWORD_RESET_MAX_PER_HOUR:
             raise HTTPException(
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                detail="Muitas solicitacoes deste IP. Tente novamente mais tarde.",
+            detail="Muitas solicitações deste IP. Tente novamente mais tarde.",
             )
 
 
@@ -276,7 +276,7 @@ def issue_email_verification_challenge(
             if not sent:
                 raise HTTPException(
                     status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                    detail="Nao foi possivel enviar o email de verificacao. Tente novamente em instantes.",
+                    detail="Não foi possível enviar o e-mail de verificação. Tente novamente em instantes.",
                 )
     return {
         "pending_token": pending_token,
@@ -301,14 +301,14 @@ def _validate_google_access_token(access_token: str) -> dict:
     except (urllib.error.HTTPError, urllib.error.URLError, TimeoutError, ValueError):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token Google invalido ou expirado.",
+            detail="Token do Google inválido ou expirado.",
         )
 
     audience = token_info.get("aud")
     if GOOGLE_CLIENT_ID and audience != GOOGLE_CLIENT_ID:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token Google nao pertence ao cliente configurado.",
+            detail="Token do Google não pertence ao cliente configurado.",
         )
 
     try:
@@ -331,18 +331,18 @@ def _validate_google_access_token(access_token: str) -> dict:
     except (urllib.error.HTTPError, urllib.error.URLError, TimeoutError, ValueError):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Nao foi possivel consultar dados da conta Google.",
+            detail="Não foi possível consultar os dados da conta Google.",
         )
 
     if not user_info.get("email"):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Conta Google sem email disponivel.",
+            detail="Conta do Google sem e-mail disponível.",
         )
     if user_info.get("email_verified") is not True:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email da conta Google nao esta verificado.",
+            detail="O e-mail da conta do Google não está verificado.",
         )
 
     return user_info
@@ -358,7 +358,7 @@ def start_google_auth(access_token: str, db: Session, request_ip: str | None = N
     if not google_id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Resposta Google sem identificador de usuario.",
+            detail="Resposta do Google sem identificador de usuário.",
         )
 
     user = db.query(User).filter(User.email == email).first()
@@ -380,7 +380,7 @@ def start_google_auth(access_token: str, db: Session, request_ip: str | None = N
         if user.google_id and user.google_id != google_id:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail="Este email ja esta vinculado a outra conta Google.",
+                detail="Este e-mail já está vinculado a outra conta do Google.",
             )
         if user.google_id is None:
             user.google_id = google_id
@@ -432,12 +432,12 @@ def resend_email_code(pending_token: str, db: Session, request_ip: str | None = 
     if not sent:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Nao foi possivel reenviar o codigo. Tente novamente em instantes.",
+            detail="Não foi possível reenviar o código. Tente novamente em instantes.",
         )
 
     logger.info("Verification code resent for user_id=%s", str(user.id))
     return {
-        "message": "Novo codigo enviado com sucesso.",
+        "message": "Novo código enviado com sucesso.",
         "pending_token": pending_token_new,
         "email": user.email,
         "code_expires_in_seconds": EMAIL_VERIFICATION_EXPIRATION_MINUTES * 60,
@@ -508,14 +508,14 @@ def reset_password(token: str, new_password: str, db: Session) -> str:
     if reset_token is None or _is_expired(reset_token.expires_at):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Token invalido ou expirado.",
+            detail="Token inválido ou expirado.",
         )
 
     user = db.query(User).filter(User.id == reset_token.user_id).first()
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Token invalido ou expirado.",
+            detail="Token inválido ou expirado.",
         )
 
     now = _utcnow()
@@ -536,7 +536,7 @@ def verify_email_code_and_issue_token(pending_token: str, code: str, db: Session
     if not payload or payload.get("scope") != "email_verification":
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token de verificacao invalido ou expirado.",
+            detail="Token de verificação inválido ou expirado.",
         )
 
     user_id = payload.get("sub")
@@ -544,7 +544,7 @@ def verify_email_code_and_issue_token(pending_token: str, code: str, db: Session
     if not user_id or not verification_code_id:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token de verificacao invalido.",
+            detail="Token de verificação inválido.",
         )
 
     try:
@@ -553,7 +553,7 @@ def verify_email_code_and_issue_token(pending_token: str, code: str, db: Session
     except ValueError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token de verificacao invalido.",
+            detail="Token de verificação inválido.",
         )
 
     verification = (
@@ -567,18 +567,18 @@ def verify_email_code_and_issue_token(pending_token: str, code: str, db: Session
     if verification is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Solicitacao de verificacao nao encontrada.",
+            detail="Solicitação de verificação não encontrada.",
         )
 
     if verification.consumed_at is not None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Codigo ja utilizado.",
+            detail="Código já utilizado.",
         )
     if _is_expired(verification.expires_at):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Codigo expirado. Faca login com Google novamente.",
+            detail="Código expirado. Faça login com o Google novamente.",
         )
     if verification.attempts_count >= EMAIL_VERIFICATION_MAX_ATTEMPTS:
         raise HTTPException(
@@ -590,7 +590,7 @@ def verify_email_code_and_issue_token(pending_token: str, code: str, db: Session
     if not clean_code.isdigit() or len(clean_code) != 6:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Codigo deve conter 6 digitos numericos.",
+            detail="O código deve conter 6 dígitos numéricos.",
         )
     provided_code_hash = _hash_secret(clean_code)
     if not hmac.compare_digest(provided_code_hash, verification.code_hash):
@@ -604,14 +604,14 @@ def verify_email_code_and_issue_token(pending_token: str, code: str, db: Session
             )
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Codigo incorreto.",
+            detail="Código incorreto.",
         )
 
     user = db.query(User).filter(User.id == user_uuid).first()
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Usuario nao encontrado.",
+            detail="Usuário não encontrado.",
         )
 
     verification.consumed_at = _utcnow()
@@ -626,7 +626,7 @@ def verify_email_magic_link_and_issue_token(magic_token: str, db: Session) -> st
     if not payload or payload.get("scope") != "email_magic_link":
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Link de verificacao invalido ou expirado.",
+            detail="Link de verificação inválido ou expirado.",
         )
 
     user_id = payload.get("sub")
@@ -634,7 +634,7 @@ def verify_email_magic_link_and_issue_token(magic_token: str, db: Session) -> st
     if not user_id or not verification_code_id:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Link de verificacao invalido.",
+            detail="Link de verificação inválido.",
         )
 
     try:
@@ -643,7 +643,7 @@ def verify_email_magic_link_and_issue_token(magic_token: str, db: Session) -> st
     except ValueError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Link de verificacao invalido.",
+            detail="Link de verificação inválido.",
         )
 
     verification = (
@@ -657,24 +657,24 @@ def verify_email_magic_link_and_issue_token(magic_token: str, db: Session) -> st
     if verification is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Solicitacao de verificacao nao encontrada.",
+            detail="Solicitação de verificação não encontrada.",
         )
     if verification.consumed_at is not None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Link ja utilizado.",
+            detail="Link já utilizado.",
         )
     if _is_expired(verification.expires_at):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Link expirado. Faca login com Google novamente.",
+            detail="Link expirado. Faça login com o Google novamente.",
         )
 
     user = db.query(User).filter(User.id == user_uuid).first()
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Usuario nao encontrado.",
+            detail="Usuário não encontrado.",
         )
 
     verification.consumed_at = _utcnow()

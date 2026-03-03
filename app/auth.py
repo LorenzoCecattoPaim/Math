@@ -3,14 +3,15 @@ import hashlib
 import secrets
 from typing import Optional
 from uuid import UUID
-from jose import JWTError, jwt
 import logging
 
+from jose import JWTError, jwt
 from passlib.context import CryptContext
 from passlib.exc import UnknownHashError
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
+
 from app.config import (
     JWT_SECRET_KEY,
     JWT_ALGORITHM,
@@ -24,8 +25,10 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 logger = logging.getLogger(__name__)
 
+
 def hash_password(password: str) -> str:
     return pwd_context.hash(password)
+
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     try:
@@ -33,6 +36,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     except (UnknownHashError, ValueError):
         logger.warning("Unable to verify password due to invalid hash format.")
         return False
+
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
     to_encode = data.copy()
@@ -44,6 +48,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
     return encoded_jwt
+
 
 def create_refresh_token() -> tuple[str, datetime]:
     expires_at = datetime.utcnow() + timedelta(days=JWT_REFRESH_EXPIRE_DAYS)
@@ -63,20 +68,21 @@ def decode_token(token: str, expected_type: Optional[str] = None) -> Optional[di
     except JWTError:
         return None
 
+
 def get_current_user(
     token: str = Depends(oauth2_scheme),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ) -> User:
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Token inválido ou expirado",
+        detail="Token inválido ou expirado.",
         headers={"WWW-Authenticate": "Bearer"},
     )
-    
+
     payload = decode_token(token, expected_type="access")
     if payload is None:
         raise credentials_exception
-    
+
     user_id_raw = payload.get("sub")
     if user_id_raw is None:
         raise credentials_exception
@@ -89,5 +95,5 @@ def get_current_user(
     user = db.query(User).filter(User.id == user_id).first()
     if user is None:
         raise credentials_exception
-    
+
     return user

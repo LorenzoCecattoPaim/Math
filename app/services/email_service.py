@@ -13,27 +13,27 @@ logger = logging.getLogger(__name__)
 
 
 def _build_email_body(recipient_name: str | None, code: str, magic_link: str) -> str:
-    greeting_name = recipient_name or "usuario"
+    greeting_name = recipient_name or "usuário"
     return (
-        f"Ola, {greeting_name}!\n\n"
+        f"Olá, {greeting_name}!\n\n"
         "Clique no link abaixo para confirmar seu login no ProvaLab:\n\n"
         f"{magic_link}\n\n"
-        "Se preferir, use o codigo abaixo na tela de verificacao:\n\n"
+        "Se preferir, use o código abaixo na tela de verificação:\n\n"
         f"{code}\n\n"
-        "Este codigo expira em 10 minutos.\n"
-        "Se voce nao solicitou este acesso, ignore este email."
+        "Este código expira em 10 minutos.\n"
+        "Se você não solicitou este acesso, ignore este e-mail."
     )
 
 
 def _build_password_reset_email_body(recipient_name: str | None, reset_link: str) -> str:
-    greeting_name = recipient_name or "usuario"
+    greeting_name = recipient_name or "usuário"
     return (
-        f"Ola, {greeting_name}!\n\n"
-        "Recebemos uma solicitacao para redefinir sua senha no ProvaLab.\n\n"
+        f"Olá, {greeting_name}!\n\n"
+        "Recebemos uma solicitação para redefinir sua senha no ProvaLab.\n\n"
         "Clique no link abaixo para cadastrar uma nova senha:\n\n"
         f"{reset_link}\n\n"
         "Este link expira em 15 minutos.\n"
-        "Se voce nao solicitou a redefinicao, ignore este email."
+        "Se você não solicitou a redefinição, ignore este e-mail."
     )
 
 
@@ -112,6 +112,6 @@ def send_password_reset_email(
 ) -> bool:
     return _send_email(
         recipient_email=recipient_email,
-        subject="Redefinicao de senha - ProvaLab",
+        subject="Redefinição de senha - ProvaLab",
         text_body=_build_password_reset_email_body(recipient_name, reset_link),
     )

@@ -34,7 +34,7 @@ export function GoogleLoginButton({
 
   useEffect(() => {
     if (!googleClientId) {
-      onError("Google Login nao configurado no frontend.");
+      onError("Login com Google não configurado no frontend.");
       return;
     }
 
@@ -54,7 +54,7 @@ export function GoogleLoginButton({
     script.async = true;
     script.defer = true;
     script.onload = () => setScriptLoaded(true);
-    script.onerror = () => onError("Nao foi possivel carregar o login do Google.");
+    script.onerror = () => onError("Não foi possível carregar o login do Google.");
     document.body.appendChild(script);
   }, [googleClientId, onError]);
 
@@ -100,7 +100,7 @@ export function GoogleLoginButton({
         }
         setAuthLoading(false);
         onError(
-          `Falha no popup do Google (${error.type || "erro_desconhecido"}). Verifique bloqueador de popup e tente novamente.`
+          `Falha no pop-up do Google (${error.type || "erro_desconhecido"}). Verifique o bloqueador de pop-ups e tente novamente.`
         );
       },
     });
@@ -113,7 +113,7 @@ export function GoogleLoginButton({
 
     const tokenClient = ensureTokenClient();
     if (!tokenClient) {
-      onError("Configuracao Google invalida.");
+      onError("Configuração do Google inválida.");
       return;
     }
 
@@ -121,7 +121,7 @@ export function GoogleLoginButton({
     requestTimeoutRef.current = window.setTimeout(() => {
       setAuthLoading(false);
       onError(
-        "Tempo excedido ao receber resposta do Google. Confira origem autorizada no Google Cloud e tente novamente."
+        "Tempo excedido ao receber resposta do Google. Confira a origem autorizada no Google Cloud e tente novamente."
       );
     }, 120000);
 
@@ -133,7 +133,7 @@ export function GoogleLoginButton({
         requestTimeoutRef.current = null;
       }
       setAuthLoading(false);
-      onError("Nao foi possivel iniciar o popup do Google.");
+      onError("Não foi possível iniciar o pop-up do Google.");
     }
   };
 
@@ -152,7 +152,7 @@ export function GoogleLoginButton({
           Conectando...
         </>
       ) : !googleClientId ? (
-        "Google nao configurado"
+        "Google não configurado"
       ) : !scriptLoaded ? (
         <>
           <Loader2 className="w-4 h-4 animate-spin" />

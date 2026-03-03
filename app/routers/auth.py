@@ -59,7 +59,7 @@ from app.services.auth_service import (
 from app.services.email_service import send_verification_email
 from app.services.plan_service import ensure_user_plan_profile
 
-router = APIRouter(prefix="/auth", tags=["Autenticacao"])
+router = APIRouter(prefix="/auth", tags=["Autenticação"])
 logger = logging.getLogger(__name__)
 
 _ALLOWED_SAMESITE = {"lax", "strict", "none"}
@@ -121,7 +121,7 @@ def signup(
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
 ):
-    """Registrar novo usuario com email/senha e iniciar verificacao de email."""
+    """Registrar novo usuário com e-mail/senha e iniciar verificação de e-mail."""
     start = time.perf_counter()
     normalized_email = user_data.email.strip().lower()
     existing_user = (
@@ -134,7 +134,7 @@ def signup(
     if user_data.password != user_data.confirm_password:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Senha e confirmacao de senha devem ser iguais.",
+            detail="Senha e confirmação de senha devem ser iguais.",
         )
 
     if len(user_data.password) < PASSWORD_MIN_LENGTH:
@@ -147,7 +147,7 @@ def signup(
         if existing_user.email_verified:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Email ja cadastrado",
+                detail="E-mail já cadastrado.",
             )
 
         if not existing_user.password_hash:
@@ -159,7 +159,7 @@ def signup(
         if not verify_password(user_data.password, existing_user.password_hash):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Email ja cadastrado. Use a senha da conta para entrar.",
+                detail="E-mail já cadastrado. Use a senha da conta para entrar.",
             )
 
         if user_data.full_name and not existing_user.full_name:
@@ -196,7 +196,7 @@ def signup(
         pending_token=challenge["pending_token"],
         email=challenge["email"],
         code_expires_in_seconds=challenge["code_expires_in_seconds"],
-        message="Conta criada. Verifique seu email para concluir o acesso.",
+        message="Conta criada. Verifique seu e-mail para concluir o acesso.",
     )
 
 
@@ -208,7 +208,7 @@ def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db),
 ):
-    """Login com email e senha."""
+    """Login com e-mail e senha."""
     start = time.perf_counter()
     normalized_email = form_data.username.strip().lower()
     user = (
@@ -220,7 +220,7 @@ def login(
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Email ou senha incorretos.",
+            detail="E-mail ou senha incorretos.",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
@@ -233,7 +233,7 @@ def login(
     if not verify_password(form_data.password, user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Email ou senha incorretos.",
+            detail="E-mail ou senha incorretos.",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
@@ -254,7 +254,7 @@ def login(
             pending_token=challenge["pending_token"],
             email=challenge["email"],
             code_expires_in_seconds=challenge["code_expires_in_seconds"],
-            message="Email nao verificado. Enviamos um novo codigo de confirmacao.",
+            message="E-mail não verificado. Enviamos um novo código de confirmação.",
         )
 
     access_token = create_access_token(data={"sub": str(user.id)})
@@ -301,7 +301,7 @@ def google_auth(
     if not sent:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Nao foi possivel enviar o email de verificacao. Tente novamente em instantes.",
+            detail="Não foi possível enviar o e-mail de verificação. Tente novamente em instantes.",
         )
     return GoogleAuthResponse(
         pending_token=result["pending_token"],
@@ -340,14 +340,14 @@ def verify_email_code(
     )
     payload_data = decode_token(access_token, expected_type="access")
     if payload_data is None or payload_data.get("sub") is None:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token invalido")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token inválido.")
     try:
         user_id = UUID(str(payload_data["sub"]))
     except ValueError as exc:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token invalido") from exc
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token inválido.") from exc
     user = db.query(User).filter(User.id == user_id).first()
     if user is None:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario nao encontrado")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuário não encontrado.")
     _issue_refresh_session(
         response=response,
         db=db,
@@ -367,14 +367,14 @@ def verify_email_link(
     access_token = verify_email_magic_link_and_issue_token(payload.magic_token, db)
     payload_data = decode_token(access_token, expected_type="access")
     if payload_data is None or payload_data.get("sub") is None:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token invalido")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token inválido.")
     try:
         user_id = UUID(str(payload_data["sub"]))
     except ValueError as exc:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token invalido") from exc
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token inválido.") from exc
     user = db.query(User).filter(User.id == user_id).first()
     if user is None:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario nao encontrado")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuário não encontrado.")
     _issue_refresh_session(
         response=response,
         db=db,
@@ -392,7 +392,7 @@ def refresh_session(
 ):
     refresh_token = request.cookies.get(REFRESH_TOKEN_COOKIE_NAME)
     if not refresh_token:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Sessao expirada")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Sessão expirada.")
 
     refresh_token_hash = hash_refresh_token(refresh_token)
     current_session = (
@@ -411,14 +411,14 @@ def refresh_session(
             )
             db.commit()
         _clear_refresh_cookie(response)
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Sessao expirada")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Sessão expirada.")
 
     user = db.query(User).filter(User.id == current_session.user_id).first()
     if user is None:
         current_session.revoked_at = datetime.utcnow()
         db.commit()
         _clear_refresh_cookie(response)
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Sessao expirada")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Sessão expirada.")
 
     current_session.revoked_at = datetime.utcnow()
     current_session.last_used_at = datetime.utcnow()
@@ -478,5 +478,5 @@ def reset_password_endpoint(payload: ResetPasswordRequest, db: Session = Depends
 
 @router.get("/me", response_model=UserResponse)
 def get_me(current_user: User = Depends(get_current_user)):
-    """Obter dados do usuario autenticado."""
+    """Obter dados do usuário autenticado."""
     return current_user

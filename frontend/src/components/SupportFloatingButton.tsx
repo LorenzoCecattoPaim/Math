@@ -22,14 +22,14 @@ export function SupportFloatingButton() {
         Falar no WhatsApp
       </a>
       <span className="rounded-full bg-background/95 px-3 py-1 text-center text-xs text-muted-foreground shadow-sm">
-        Atendimento rapido
+        Atendimento rápido
       </span>
       <a
         href={`mailto:${SUPPORT_EMAIL}`}
         className="inline-flex items-center gap-2 rounded-full bg-background px-4 py-2.5 text-sm font-semibold text-foreground shadow-lg transition hover:bg-muted/40"
       >
         <Mail className="h-4 w-4" />
-        E-mail suporte
+        E-mail de suporte
       </a>
       <Link
         to="/support"

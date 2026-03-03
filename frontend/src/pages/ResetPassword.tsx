@@ -33,8 +33,8 @@ export default function ResetPassword() {
     if (!token) {
       toast({
         variant: "destructive",
-        title: "Link invalido",
-        description: "Este link de redefinicao nao e valido.",
+        title: "Link inválido",
+        description: "Este link de redefinição não é válido.",
       });
       return;
     }
@@ -52,7 +52,7 @@ export default function ResetPassword() {
       toast({
         variant: "destructive",
         title: "Senhas diferentes",
-        description: "Senha e confirmacao precisam ser identicas.",
+        description: "Senha e confirmação precisam ser idênticas.",
       });
       return;
     }
@@ -93,7 +93,7 @@ export default function ResetPassword() {
           </div>
           <h1 className="text-2xl font-bold">Redefinir senha</h1>
           <p className="text-sm text-muted-foreground">
-            Cadastre sua nova senha para continuar usando sua conta.
+            Cadastre sua nova senha para continuar usando a sua conta.
           </p>
         </div>
 
@@ -112,7 +112,7 @@ export default function ResetPassword() {
               className="h-12"
             />
             <p className={passwordTooShort ? "text-xs text-destructive" : "text-xs text-muted-foreground"}>
-              Minimo de {PASSWORD_MIN_LENGTH} caracteres
+              Mínimo de {PASSWORD_MIN_LENGTH} caracteres
             </p>
           </div>
 
@@ -130,7 +130,7 @@ export default function ResetPassword() {
               className="h-12"
             />
             {passwordMismatch ? (
-              <p className="text-xs text-destructive">As senhas nao coincidem.</p>
+              <p className="text-xs text-destructive">As senhas não coincidem.</p>
             ) : (
               <p className="text-xs text-muted-foreground">Repita a nova senha.</p>
             )}

@@ -109,7 +109,7 @@ async function fetchWithTimeout(
     return await fetch(url, { ...options, signal: controller.signal });
   } catch (error) {
     if (error instanceof DOMException && error.name === "AbortError") {
-      throw new Error("Tempo esgotado na comunicacao com o servidor.");
+      throw new Error("Tempo esgotado na comunicação com o servidor.");
     }
     throw error;
   } finally {
@@ -262,7 +262,7 @@ export const authApi = {
     });
 
     if (!response.ok) {
-      return parseError(response, "Email ou senha incorretos");
+      return parseError(response, "E-mail ou senha incorretos");
     }
 
     const data = (await response.json()) as AuthSession | EmailVerificationChallenge;
@@ -281,7 +281,7 @@ export const authApi = {
     }, Math.max(DEFAULT_TIMEOUT_MS, 180000));
 
     if (!response.ok) {
-      return parseError(response, "Nao foi possivel autenticar com Google");
+      return parseError(response, "Não foi possível autenticar com o Google");
     }
 
     return response.json() as Promise<{
@@ -302,7 +302,7 @@ export const authApi = {
     }, Math.max(DEFAULT_TIMEOUT_MS, 180000));
 
     if (!response.ok) {
-      return parseError(response, "Codigo invalido ou expirado");
+      return parseError(response, "Código inválido ou expirado");
     }
 
     const data = await response.json();
@@ -319,7 +319,7 @@ export const authApi = {
     }, Math.max(DEFAULT_TIMEOUT_MS, 180000));
 
     if (!response.ok) {
-      return parseError(response, "Link de verificacao invalido ou expirado");
+      return parseError(response, "Link de verificação inválido ou expirado");
     }
 
     const data = await response.json();
@@ -335,7 +335,7 @@ export const authApi = {
     });
 
     if (!response.ok) {
-      return parseError(response, "Nao foi possivel reenviar o codigo");
+      return parseError(response, "Não foi possível reenviar o código");
     }
 
     return response.json() as Promise<{
@@ -354,7 +354,7 @@ export const authApi = {
     });
 
     if (!response.ok) {
-      return parseError(response, "Nao foi possivel processar a solicitacao");
+      return parseError(response, "Não foi possível processar a solicitação");
     }
 
     return response.json() as Promise<{ message: string }>;
@@ -368,7 +368,7 @@ export const authApi = {
     });
 
     if (!response.ok) {
-      return parseError(response, "Nao foi possivel redefinir sua senha");
+      return parseError(response, "Não foi possível redefinir sua senha");
     }
 
     return response.json() as Promise<{ message: string }>;
@@ -378,7 +378,7 @@ export const authApi = {
     const response = await fetchWithAuth("/auth/me", {}, Math.max(DEFAULT_TIMEOUT_MS, 180000));
 
     if (!response.ok) {
-      return parseError(response, "Nao autenticado");
+      return parseError(response, "Não autenticado");
     }
 
     return response.json();
@@ -428,7 +428,7 @@ export const exercisesApi = {
       buildEndpoint("/exercises/random", { subject, difficulty })
     );
     if (!response.ok) {
-      return parseError(response, "Erro ao carregar exercicio");
+      return parseError(response, "Erro ao carregar exercício");
     }
     return response.json();
   },
@@ -438,7 +438,7 @@ export const exercisesApi = {
       buildEndpoint("/exercises", { subject, difficulty, limit })
     );
     if (!response.ok) {
-      return parseError(response, "Erro ao listar exercicios");
+      return parseError(response, "Erro ao listar exercícios");
     }
     return response.json();
   },
@@ -464,7 +464,7 @@ export const attemptsApi = {
   async getHistory(limit = 50) {
     const response = await fetchWithAuth(`/attempts?limit=${limit}`);
     if (!response.ok) {
-      return parseError(response, "Erro ao carregar historico");
+      return parseError(response, "Erro ao carregar histórico");
     }
     return response.json();
   },
@@ -472,7 +472,7 @@ export const attemptsApi = {
   async getStats() {
     const response = await fetchWithAuth("/attempts/stats");
     if (!response.ok) {
-      return parseError(response, "Erro ao carregar estatisticas");
+      return parseError(response, "Erro ao carregar estatísticas");
     }
     return response.json();
   },
@@ -492,7 +492,7 @@ export const vestibularApi = {
       buildEndpoint("/vestibular/exercises", { limit, offset, difficulty })
     );
     if (!response.ok) {
-      return parseError(response, "Erro ao carregar exercicios vestibulares");
+      return parseError(response, "Erro ao carregar exercícios vestibulares");
     }
     return response.json() as Promise<{
       items: Array<{
@@ -527,7 +527,7 @@ export const vestibularApi = {
   async getVestibularStats() {
     const response = await fetchWithAuth("/vestibular/stats");
     if (!response.ok) {
-      return parseError(response, "Erro ao carregar estatisticas vestibulares");
+      return parseError(response, "Erro ao carregar estatísticas vestibulares");
     }
     return response.json() as Promise<{
       exercicios_feitos: number;

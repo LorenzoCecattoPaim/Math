@@ -117,7 +117,7 @@ export default function ProgressPage() {
           Voltar ao painel
         </Link>
 
-        <h1 className="text-3xl font-bold mb-2">Seu Progresso</h1>
+        <h1 className="text-3xl font-bold mb-2">Seu progresso</h1>
         <p className="text-muted-foreground mb-8">Acompanhe seu desempenho e evolução.</p>
 
         {isLoading ? (
@@ -177,7 +177,7 @@ export default function ProgressPage() {
             </div>
 
             <div className="p-6 rounded-2xl bg-card border border-border">
-              <h2 className="text-xl font-bold mb-6">Desempenho nos Últimos 14 Dias</h2>
+              <h2 className="text-xl font-bold mb-6">Desempenho nos últimos 14 dias</h2>
               {performanceData.some(d => d.exercicios > 0) ? (
                 <ResponsiveContainer width="100%" height={300}>
                   <AreaChart data={performanceData}>
@@ -190,14 +190,14 @@ export default function ProgressPage() {
                 </ResponsiveContainer>
               ) : (
                 <div className="flex items-center justify-center h-[300px] text-muted-foreground">
-                  Pratique exercícios para ver seu progresso!
+                  Pratique exercícios para ver seu progresso.
                 </div>
               )}
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div className="p-6 rounded-2xl bg-card border border-border">
-                <h2 className="text-xl font-bold mb-6">Exercícios por Área</h2>
+                <h2 className="text-xl font-bold mb-6">Exercícios por área</h2>
                 {subjectData.length > 0 ? (
                   <ResponsiveContainer width="100%" height={300}>
                     <PieChart>
@@ -217,7 +217,7 @@ export default function ProgressPage() {
               </div>
 
               <div className="p-6 rounded-2xl bg-card border border-border">
-                <h2 className="text-xl font-bold mb-6">Desempenho por Área</h2>
+                <h2 className="text-xl font-bold mb-6">Desempenho por área</h2>
                 {subjectData.length > 0 ? (
                   <div className="space-y-4">
                     {subjectData.map((subject, index) => (
@@ -237,7 +237,7 @@ export default function ProgressPage() {
                   </div>
                 ) : (
                   <div className="flex items-center justify-center h-[300px] text-muted-foreground">
-                    Pratique para ver seu desempenho!
+                    Pratique para ver seu desempenho.
                   </div>
                 )}
               </div>

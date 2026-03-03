@@ -12,18 +12,18 @@ from app.dependencies.plan import check_plan_limit
 from app.models import Exercise, User
 from app.schemas import ExerciseCreate, ExerciseResponse
 
-router = APIRouter(prefix="/exercises", tags=["ExercÃ­cios"])
+router = APIRouter(prefix="/exercises", tags=["Exercícios"])
 
 
 @router.get("", response_model=List[ExerciseResponse])
 def list_exercises(
-    subject: Optional[str] = Query(None, description="Filtrar por matÃ©ria"),
+    subject: Optional[str] = Query(None, description="Filtrar por matéria"),
     difficulty: Optional[str] = Query(None, description="Filtrar por dificuldade"),
     limit: int = Query(50, ge=1, le=100, description="Limite de resultados"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Listar exercÃ­cios com filtros opcionais"""
+    """Listar exercícios com filtros opcionais."""
     query = db.query(Exercise)
 
     if subject:
@@ -37,12 +37,12 @@ def list_exercises(
 
 @router.get("/random", response_model=ExerciseResponse)
 def get_random_exercise(
-    subject: str = Query(..., description="MatÃ©ria do exercÃ­cio"),
-    difficulty: str = Query(..., description="Dificuldade do exercÃ­cio"),
+    subject: str = Query(..., description="Matéria do exercício"),
+    difficulty: str = Query(..., description="Dificuldade do exercício"),
     db: Session = Depends(get_db),
     current_user: User = Depends(check_plan_limit(increment_use=True)),
 ):
-    """Obter um exercÃ­cio aleatÃ³rio por matÃ©ria e dificuldade"""
+    """Obter um exercício aleatório por matéria e dificuldade."""
     base_query = db.query(Exercise).filter(
         Exercise.subject == subject,
         Exercise.difficulty == difficulty,
@@ -51,7 +51,7 @@ def get_random_exercise(
     if total == 0:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Nenhum exercÃ­cio encontrado para {subject} ({difficulty})",
+            detail=f"Nenhum exercício encontrado para {subject} ({difficulty}).",
         )
 
     random_offset = random.randint(0, total - 1)
@@ -59,7 +59,7 @@ def get_random_exercise(
     if not exercise:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Nenhum exercÃ­cio encontrado para {subject} ({difficulty})",
+            detail=f"Nenhum exercício encontrado para {subject} ({difficulty}).",
         )
     return exercise
 
@@ -70,12 +70,12 @@ def get_exercise(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Obter exercÃ­cio por ID"""
+    """Obter exercício por ID."""
     exercise = db.query(Exercise).filter(Exercise.id == exercise_id).first()
     if not exercise:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="ExercÃ­cio nÃ£o encontrado",
+            detail="Exercício não encontrado.",
         )
     return exercise
 
@@ -86,7 +86,7 @@ def create_exercise(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Criar novo exercÃ­cio"""
+    """Criar novo exercício."""
     new_exercise = Exercise(
         question=exercise_data.question,
         options=exercise_data.options,

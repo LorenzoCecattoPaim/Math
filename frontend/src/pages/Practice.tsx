@@ -35,18 +35,18 @@ interface Exercise {
 }
 
 const difficultyLabels: Record<Difficulty, { label: string; colorClass: string }> = {
-  easy: { label: "Facil", colorClass: "bg-success/10 text-success border-success/30" },
-  medium: { label: "Medio", colorClass: "bg-accent/10 text-accent border-accent/30" },
-  hard: { label: "Dificil", colorClass: "bg-destructive/10 text-destructive border-destructive/30" },
+  easy: { label: "Fácil", colorClass: "bg-success/10 text-success border-success/30" },
+  medium: { label: "Médio", colorClass: "bg-accent/10 text-accent border-accent/30" },
+  hard: { label: "Difícil", colorClass: "bg-destructive/10 text-destructive border-destructive/30" },
 };
 
 const subjectNames: Record<string, string> = {
-  algebra: "Algebra",
+  algebra: "Álgebra",
   geometry: "Geometria",
-  calculus: "Calculo",
-  statistics: "Estatistica",
+  calculus: "Cálculo",
+  statistics: "Estatística",
   trigonometry: "Trigonometria",
-  arithmetic: "Aritmetica",
+  arithmetic: "Aritmética",
   vestibular: "Vestibulares",
 };
 
@@ -62,24 +62,24 @@ const difficultyCards: Record<
   }
 > = {
   easy: {
-    label: "Facil",
-    description: "Conceitos basicos",
+    label: "Fácil",
+    description: "Conceitos básicos",
     icon: Zap,
     buttonClass: "bg-success/10 border-success/30",
     iconClass: "text-success",
     iconContainerClass: "bg-success/20",
   },
   medium: {
-    label: "Medio",
-    description: "Questoes intermediarias",
+    label: "Médio",
+    description: "Questões intermediárias",
     icon: Target,
     buttonClass: "bg-accent/10 border-accent/30",
     iconClass: "text-accent",
     iconContainerClass: "bg-accent/20",
   },
   hard: {
-    label: "Dificil",
-    description: "Desafios avancados",
+    label: "Difícil",
+    description: "Desafios avançados",
     icon: Trophy,
     buttonClass: "bg-destructive/10 border-destructive/30",
     iconClass: "text-destructive",
@@ -138,7 +138,7 @@ export default function Practice() {
         const page = await vestibularApi.getVestibularExercises(1, 0, difficulty);
         const apiExercise = page.items[0];
         if (!apiExercise) {
-          throw new Error("Nao ha mais exercicios vestibulares disponiveis para esse nivel.");
+          throw new Error("Não há mais exercícios vestibulares disponíveis para esse nível.");
         }
         setCurrentExercise({
           id: apiExercise.id,
@@ -154,14 +154,14 @@ export default function Practice() {
           question: apiExercise.question,
           options: apiExercise.options || [],
           correctAnswer: apiExercise.correct_answer,
-          explanation: apiExercise.explanation || "Sem explicacao disponivel.",
+          explanation: apiExercise.explanation || "Sem explicação disponível.",
         });
       }
       resetExerciseState();
     } catch (error) {
       toast({
         variant: "destructive",
-        title: "Nao foi possivel carregar o exercicio",
+        title: "Não foi possível carregar o exercício",
         description: (error as Error).message || "Tente novamente em instantes.",
       });
       setCurrentExercise(null);
@@ -182,7 +182,7 @@ export default function Practice() {
           if (!prev) return prev;
           return {
             ...prev,
-            explanation: result.explanation || "Sem explicacao disponivel.",
+            explanation: result.explanation || "Sem explicação disponível.",
           };
         });
         setIsSubmitted(true);
@@ -190,7 +190,7 @@ export default function Practice() {
         toast({
           title: result.correct ? "Resposta correta!" : "Resposta incorreta",
           description: result.correct
-            ? `Parabens! Sua taxa atual no Vestibular e ${result.accuracy}%.`
+            ? `Parabéns! Sua taxa atual no Vestibular é ${result.accuracy}%.`
             : `A resposta correta era: ${currentExercise.correctAnswer}. Taxa atual: ${result.accuracy}%.`,
           variant: result.correct ? "default" : "destructive",
         });
@@ -198,7 +198,7 @@ export default function Practice() {
         toast({
           variant: "destructive",
           title: "Falha ao registrar resposta",
-          description: (error as Error).message || "Nao foi possivel salvar sua resposta.",
+          description: (error as Error).message || "Não foi possível salvar sua resposta.",
         });
       }
       return;
@@ -218,14 +218,14 @@ export default function Practice() {
       toast({
         variant: "destructive",
         title: "Falha ao registrar tentativa",
-        description: "Sua resposta foi exibida, mas nao conseguimos salvar seu historico.",
+        description: "Sua resposta foi exibida, mas não conseguimos salvar seu histórico.",
       });
     }
 
     toast({
       title: isCorrect ? "Resposta correta!" : "Resposta incorreta",
       description: isCorrect
-        ? "Parabens! Continue praticando."
+        ? "Parabéns! Continue praticando."
         : `A resposta correta era: ${currentExercise.correctAnswer}`,
       variant: isCorrect ? "default" : "destructive",
     });
@@ -270,7 +270,7 @@ export default function Practice() {
                 <span className="text-4xl">📐</span>
               </div>
               <h1 className="text-3xl font-bold mb-2">{subjectName}</h1>
-              <p className="text-muted-foreground">Escolha o nivel de dificuldade.</p>
+              <p className="text-muted-foreground">Escolha o nível de dificuldade.</p>
             </div>
 
             <div className="grid gap-4">
@@ -352,7 +352,7 @@ export default function Practice() {
           <AnimatePresence mode="wait">
             {!currentExercise ? (
               <motion.div key="generate" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-16">
-                <div className="text-6xl mb-6">🧮</div>
+                <div className="text-6xl mb-6">🧠</div>
                 <p className="text-muted-foreground mb-8 text-lg">Pronto para praticar?</p>
                 <Button variant="hero" size="lg" onClick={generateExercise} disabled={loading}>
                   {loading ? (
@@ -363,7 +363,7 @@ export default function Practice() {
                   ) : (
                     <>
                       <Zap className="w-5 h-5 mr-2" />
-                      Gerar Exercicio
+                      Gerar exercício
                     </>
                   )}
                 </Button>
@@ -423,7 +423,7 @@ export default function Practice() {
 
                 {isSubmitted && (
                   <div className="p-6 rounded-2xl bg-muted/50 border border-border mb-6">
-                    <h3 className="font-semibold mb-2">Explicacao</h3>
+                    <h3 className="font-semibold mb-2">Explicação</h3>
                     <p className="text-muted-foreground">{currentExercise.explanation}</p>
                   </div>
                 )}
@@ -436,7 +436,7 @@ export default function Practice() {
                   ) : (
                     <Button variant="hero" className="flex-1" onClick={generateExercise}>
                       <RefreshCw className="w-4 h-4 mr-2" />
-                      Proximo Exercicio
+                      Próximo exercício
                     </Button>
                   )}
                 </div>
@@ -448,3 +448,4 @@ export default function Practice() {
     </div>
   );
 }
+

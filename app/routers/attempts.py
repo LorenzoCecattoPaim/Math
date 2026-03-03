@@ -34,7 +34,7 @@ def get_attempts(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Obter historico de tentativas do usuario"""
+    """Obter histórico de tentativas do usuário."""
     attempts = (
         db.query(ExerciseAttempt)
         .options(joinedload(ExerciseAttempt.exercise))
@@ -51,7 +51,7 @@ def get_stats(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Obter estatisticas do usuario"""
+    """Obter estatísticas do usuário."""
     total, correct, accuracy = _get_user_stats(db, current_user.id)
     return StatsResponse(total=total, correct=correct, accuracy=accuracy)
 
@@ -61,7 +61,7 @@ def get_progress(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Obter dados de progresso do usuario"""
+    """Obter dados de progresso do usuário."""
     attempts = (
         db.query(ExerciseAttempt)
         .options(joinedload(ExerciseAttempt.exercise))
@@ -84,7 +84,7 @@ def create_attempt(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Registrar nova tentativa de exercicio"""
+    """Registrar nova tentativa de exercício."""
     exercise_exists = (
         db.query(Exercise.id)
         .filter(Exercise.id == attempt_data.exercise_id)
@@ -93,7 +93,7 @@ def create_attempt(
     if not exercise_exists:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Exercicio nao encontrado.",
+            detail="Exercício não encontrado.",
         )
 
     new_attempt = ExerciseAttempt(

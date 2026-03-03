@@ -20,7 +20,7 @@ export default function ForgotPassword() {
     try {
       const response = await authApi.forgotPassword(email);
       toast({
-        title: "Solicitacao recebida",
+        title: "Solicitação recebida",
         description: response.message,
       });
       setEmail("");
@@ -52,13 +52,13 @@ export default function ForgotPassword() {
           </div>
           <h1 className="text-2xl font-bold">Esqueci minha senha</h1>
           <p className="text-sm text-muted-foreground">
-            Informe seu email para receber o link de redefinicao.
+            Informe seu e-mail para receber o link de redefinição.
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">E-mail</Label>
             <Input
               id="email"
               type="email"

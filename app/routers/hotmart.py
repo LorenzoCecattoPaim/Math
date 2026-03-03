@@ -43,13 +43,13 @@ async def hotmart_webhook(
     if not HOTMART_WEBHOOK_TOKEN:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="HOTMART_WEBHOOK_TOKEN nao configurado no backend.",
+            detail="HOTMART_WEBHOOK_TOKEN não configurado no backend.",
         )
 
     if x_hotmart_hottok != HOTMART_WEBHOOK_TOKEN:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Webhook token invalido.",
+            detail="Token de webhook inválido.",
         )
 
     try:

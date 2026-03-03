@@ -51,7 +51,7 @@ def _get_user_vestibular_stats(db: Session, user_id) -> tuple[int, int, int]:
 @router.get("/exercises", response_model=VestibularExercisesPageResponse)
 def get_vestibular_exercises(
     limit: int = Query(10, ge=1, le=50, description="Limite de resultados"),
-    offset: int = Query(0, ge=0, description="Offset para paginacao"),
+    offset: int = Query(0, ge=0, description="Offset para paginação"),
     difficulty: str = Query("medium", description="Dificuldade: medium|hard"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -61,7 +61,7 @@ def get_vestibular_exercises(
     if difficulty not in {"medium", "hard"}:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="Dificuldade invalida. Use 'medium' ou 'hard'.",
+            detail="Dificuldade inválida. Use 'medium' ou 'hard'.",
         )
 
     answered_subquery = (
@@ -106,7 +106,7 @@ def submit_vestibular_answer(
     if not exercise:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Exercicio vestibular nao encontrado.",
+            detail="Exercício vestibular não encontrado.",
         )
 
     already_answered = (
@@ -120,7 +120,7 @@ def submit_vestibular_answer(
     if already_answered:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="Exercicio vestibular ja respondido por este usuario.",
+            detail="Exercício vestibular já respondido por este usuário.",
         )
 
     normalized_answer = payload.answer.strip().casefold()
@@ -141,11 +141,11 @@ def submit_vestibular_answer(
         if "unique" in message:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail="Exercicio vestibular ja respondido por este usuario.",
+                detail="Exercício vestibular já respondido por este usuário.",
             ) from exc
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Nao foi possivel registrar a resposta vestibular.",
+            detail="Não foi possível registrar a resposta vestibular.",
         ) from exc
 
     _, _, accuracy = _get_user_vestibular_stats(db, current_user.id)

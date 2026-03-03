@@ -39,15 +39,15 @@ export default function VerifyEmail() {
       if (error) {
         toast({
           variant: "destructive",
-          title: "Link invalido",
+          title: "Link inválido",
           description: error.message,
         });
         return;
       }
 
       toast({
-        title: "Email verificado",
-        description: "Login concluido com sucesso.",
+        title: "E-mail verificado",
+        description: "Login concluído com sucesso.",
       });
       navigate("/dashboard");
     };
@@ -95,8 +95,8 @@ export default function VerifyEmail() {
     if (!pendingToken) {
       toast({
         variant: "destructive",
-        title: "Sessao de verificacao invalida",
-        description: "Inicie o acesso novamente para receber um novo codigo.",
+        title: "Sessão de verificação inválida",
+        description: "Inicie o acesso novamente para receber um novo código.",
       });
       return;
     }
@@ -127,8 +127,8 @@ export default function VerifyEmail() {
       });
 
       toast({
-        title: "Codigo reenviado",
-        description: response.message || "Novo codigo enviado para seu email.",
+        title: "Código reenviado",
+        description: response.message || "Novo código enviado para seu e-mail.",
       });
     } catch (error) {
       toast({
@@ -147,8 +147,8 @@ export default function VerifyEmail() {
     if (!pendingToken) {
       toast({
         variant: "destructive",
-        title: "Sessao de verificacao invalida",
-        description: "Inicie o acesso novamente para receber um novo codigo.",
+        title: "Sessão de verificação inválida",
+        description: "Inicie o acesso novamente para receber um novo código.",
       });
       return;
     }
@@ -156,8 +156,8 @@ export default function VerifyEmail() {
     if (!/^[0-9]{6}$/.test(code.trim())) {
       toast({
         variant: "destructive",
-        title: "Codigo invalido",
-        description: "Informe um codigo numerico de 6 digitos.",
+        title: "Código inválido",
+        description: "Informe um código numérico de 6 dígitos.",
       });
       return;
     }
@@ -169,15 +169,15 @@ export default function VerifyEmail() {
     if (error) {
       toast({
         variant: "destructive",
-        title: "Nao foi possivel validar o codigo",
+        title: "Não foi possível validar o código",
         description: error.message,
       });
       return;
     }
 
     toast({
-      title: "Email verificado",
-      description: "Login concluido com sucesso.",
+      title: "E-mail verificado",
+      description: "Login concluído com sucesso.",
     });
     navigate("/dashboard");
   };
@@ -197,9 +197,9 @@ export default function VerifyEmail() {
           <div className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
             <ShieldCheck className="w-5 h-5" />
           </div>
-          <h1 className="text-2xl font-bold">Verificar Email</h1>
+          <h1 className="text-2xl font-bold">Verificar e-mail</h1>
           <p className="text-sm text-muted-foreground">
-            Enviamos um link e um codigo de 6 digitos para {email || "seu email"}.
+            Enviamos um link e um código de 6 dígitos para {email || "seu e-mail"}.
           </p>
         </div>
 
@@ -211,7 +211,7 @@ export default function VerifyEmail() {
         ) : (
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="verificationCode">Codigo</Label>
+              <Label htmlFor="verificationCode">Código</Label>
               <Input
                 id="verificationCode"
                 type="text"
@@ -232,7 +232,7 @@ export default function VerifyEmail() {
                   Confirmando...
                 </>
               ) : (
-                "Confirmar codigo"
+                "Confirmar código"
               )}
             </Button>
 
@@ -250,15 +250,15 @@ export default function VerifyEmail() {
                     Reenviando...
                   </>
                 ) : cooldownSeconds > 0 ? (
-                  `Reenviar codigo em ${cooldownSeconds}s`
+                  `Reenviar código em ${cooldownSeconds}s`
                 ) : blockedSeconds > 0 ? (
                   `Reenvio bloqueado por ${blockedSeconds}s`
                 ) : (
-                  "Reenviar codigo"
+                  "Reenviar código"
                 )}
               </Button>
               <p className="text-xs text-muted-foreground text-center">
-                Voce pode reenviar ate 5 vezes por hora.
+                Você pode reenviar até 5 vezes por hora.
               </p>
             </div>
           </form>

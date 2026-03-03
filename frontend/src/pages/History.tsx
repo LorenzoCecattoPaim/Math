@@ -61,7 +61,7 @@ export default function History() {
           Voltar ao painel
         </Link>
 
-        <h1 className="text-3xl font-bold mb-2">Histórico de Exercícios</h1>
+        <h1 className="text-3xl font-bold mb-2">Histórico de exercícios</h1>
         <p className="text-muted-foreground mb-8">
           Veja todos os exercícios que você já praticou.
         </p>
@@ -76,7 +76,7 @@ export default function History() {
               Você ainda não praticou nenhum exercício.
             </p>
             <Link to="/dashboard" className="text-primary font-medium hover:underline">
-              Comece a praticar agora →
+              Comece a praticar agora
             </Link>
           </div>
         ) : (
