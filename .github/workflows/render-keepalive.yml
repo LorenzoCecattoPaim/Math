@@ -1,54 +1,29 @@
-name: Render Keep-Alive
+name: Keep-Alive Render
 
 on:
-  schedule:
-    # Executa a cada 10 minutos (UTC) para evitar sleep no Render Free (~15 min).
-    - cron: "*/10 * * * *"
+  # Allows running this workflow manually from the Actions tab.
   workflow_dispatch:
 
+  # Runs automatically every 14 minutes to keep the Render service awake.
+  schedule:
+    - cron: "*/14 * * * *"
+
 jobs:
-  ping:
+  keep-alive:
+    # Uses the latest Ubuntu GitHub-hosted runner.
     runs-on: ubuntu-latest
-    timeout-minutes: 5
-    env:
-      TARGET_URL: ${{ secrets.TARGET_URL }}
+
+    # Prevents the workflow from hanging too long.
+    timeout-minutes: 2
+
     steps:
-      - name: Validate TARGET_URL
-        shell: bash
+      # Sends an HTTP GET request to the Render app.
+      # `|| true` ensures this step never fails the job.
+      - name: Ping Render URL
         run: |
-          set -euo pipefail
-          if [[ -z "${TARGET_URL:-}" ]]; then
-            echo "[ERROR] Secret TARGET_URL is not configured."
-            exit 1
-          fi
-          echo "[INFO] Target: ${TARGET_URL}"
-
-      - name: Send keep-alive ping
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          TS="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
-          echo "[INFO] ${TS} - Sending GET to ${TARGET_URL}"
-
-          HTTP_CODE="$(curl -sS \
-            --location \
-            --max-time 20 \
-            --connect-timeout 10 \
-            --retry 2 \
-            --retry-delay 2 \
-            --retry-connrefused \
-            --write-out '%{http_code}' \
-            --output /tmp/keepalive_body.txt \
-            "${TARGET_URL}")"
-
-          if [[ "${HTTP_CODE}" -ge 200 && "${HTTP_CODE}" -lt 400 ]]; then
-            echo "[OK] Ping succeeded with HTTP ${HTTP_CODE}"
-            exit 0
-          fi
-
-          echo "[ERROR] Ping failed with HTTP ${HTTP_CODE}"
-          echo "[ERROR] Response body (first 300 chars):"
-          head -c 300 /tmp/keepalive_body.txt || true
-          echo
-          exit 1
+          curl --silent --show-error --location \
+            --retry 5 \
+            --retry-delay 5 \
+            --max-time 30 \
+            --fail \
+            "https://provalab.onrender.com" || true
