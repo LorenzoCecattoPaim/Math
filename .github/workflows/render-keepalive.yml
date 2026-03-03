@@ -1,29 +1,34 @@
 name: Keep-Alive Render
 
 on:
-  # Allows running this workflow manually from the Actions tab.
-  workflow_dispatch:
-
-  # Runs automatically every 14 minutes to keep the Render service awake.
+  # Runs automatically every 10 minutes.
   schedule:
-    - cron: "*/14 * * * *"
+    - cron: "*/10 * * * *"
+  # Allows manual trigger from the GitHub Actions UI.
+  workflow_dispatch:
 
 jobs:
   keep-alive:
     # Uses the latest Ubuntu GitHub-hosted runner.
     runs-on: ubuntu-latest
-
-    # Prevents the workflow from hanging too long.
-    timeout-minutes: 2
+    timeout-minutes: 3
+    env:
+      TARGET_URL: ${{ secrets.TARGET_URL }}
 
     steps:
-      # Sends an HTTP GET request to the Render app.
-      # `|| true` ensures this step never fails the job.
+      # Sends a keep-alive HTTP request and never fails the workflow.
       - name: Ping Render URL
+        shell: bash
         run: |
+          TS="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          echo "[INFO] ${TS} - Starting keep-alive ping to TARGET_URL"
+
           curl --silent --show-error --location \
+            --max-time 40 \
+            --connect-timeout 10 \
             --retry 5 \
             --retry-delay 5 \
-            --max-time 30 \
-            --fail \
-            "https://provalab.onrender.com" || true
+            --retry-connrefused \
+            "${TARGET_URL}" || true
+
+          echo "[INFO] Keep-alive finished."
