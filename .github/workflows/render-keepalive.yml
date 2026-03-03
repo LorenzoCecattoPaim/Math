@@ -3,7 +3,7 @@ name: Keep-Alive Render
 on:
   # Runs automatically every 10 minutes.
   schedule:
-    - cron: "*/10 * * * *"
+    - cron: "*/5 * * * *"
   # Allows manual trigger from the GitHub Actions UI.
   workflow_dispatch:
 
