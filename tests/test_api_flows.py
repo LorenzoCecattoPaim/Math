@@ -4,7 +4,7 @@ from pathlib import Path
 from sqlalchemy import text
 
 from app.auth import create_access_token, hash_password
-from app.models import Exercise, Profile, User, UserProfile, VestibularExercise
+from app.models import Exercise, ExerciseAttempt, Profile, User, UserProfile, VestibularExercise
 
 
 def _create_verified_user(db_session, email: str = "user@example.com", password: str = "secret123") -> User:
@@ -169,6 +169,49 @@ def test_create_attempt(client, db_session):
     assert body["exercise_id"] == str(exercise.id)
     assert body["is_correct"] is True
     assert body["exercise"]["id"] == str(exercise.id)
+
+
+def test_random_exercise_excludes_answered_by_default(client, db_session):
+    user = _create_verified_user(db_session, email="random-no-repeat@example.com")
+    exercise_answered = Exercise(
+        id=uuid.uuid4(),
+        question="Quanto e 10 - 3?",
+        options=["5", "6", "7", "8"],
+        correct_answer="7",
+        explanation="Subtracao basica.",
+        difficulty="easy",
+        subject="arithmetic",
+    )
+    exercise_new = Exercise(
+        id=uuid.uuid4(),
+        question="Quanto e 4 + 5?",
+        options=["7", "8", "9", "10"],
+        correct_answer="9",
+        explanation="Soma basica.",
+        difficulty="easy",
+        subject="arithmetic",
+    )
+    db_session.add_all([exercise_answered, exercise_new])
+    db_session.commit()
+
+    db_session.add(
+        ExerciseAttempt(
+            user_id=user.id,
+            exercise_id=exercise_answered.id,
+            user_answer="7",
+            is_correct=True,
+            time_spent_seconds=10,
+        )
+    )
+    db_session.commit()
+
+    response = client.get(
+        "/exercises/random?subject=arithmetic&difficulty=easy",
+        headers=_auth_headers(user),
+    )
+
+    assert response.status_code == 200
+    assert response.json()["id"] == str(exercise_new.id)
 
 
 def test_vestibular_access_blocked_for_free_user(client, db_session):

@@ -9,7 +9,7 @@ from sqlalchemy.sql import func
 from app.auth import get_current_user
 from app.database import get_db
 from app.dependencies.plan import check_plan_limit
-from app.models import Exercise, User
+from app.models import Exercise, ExerciseAttempt, User
 from app.schemas import ExerciseCreate, ExerciseResponse
 
 router = APIRouter(prefix="/exercises", tags=["Exercícios"])
@@ -39,6 +39,10 @@ def list_exercises(
 def get_random_exercise(
     subject: str = Query(..., description="Matéria do exercício"),
     difficulty: str = Query(..., description="Dificuldade do exercício"),
+    exclude_answered: bool = Query(
+        True,
+        description="Excluir exercícios já respondidos pelo usuário",
+    ),
     db: Session = Depends(get_db),
     current_user: User = Depends(check_plan_limit(increment_use=True)),
 ):
@@ -47,11 +51,22 @@ def get_random_exercise(
         Exercise.subject == subject,
         Exercise.difficulty == difficulty,
     )
+    if exclude_answered:
+        answered_exercises = db.query(ExerciseAttempt.exercise_id).filter(
+            ExerciseAttempt.user_id == current_user.id
+        )
+        base_query = base_query.filter(~Exercise.id.in_(answered_exercises))
+
     total = base_query.with_entities(func.count(Exercise.id)).scalar() or 0
     if total == 0:
+        detail = (
+            f"Nenhum exercício novo encontrado para {subject} ({difficulty})."
+            if exclude_answered
+            else f"Nenhum exercício encontrado para {subject} ({difficulty})."
+        )
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Nenhum exercício encontrado para {subject} ({difficulty}).",
+            detail=detail,
         )
 
     random_offset = random.randint(0, total - 1)
