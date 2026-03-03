@@ -28,10 +28,10 @@ def _normalize_database_url(raw_url: str | None) -> str:
         url = url.set(drivername="postgresql+psycopg2")
 
     host = (url.host or "").lower()
-    if "pooler.supabase.com" in host and url.port == 6543:
-        url = url.set(port=5432)
+    if "pooler.supabase.com" in host and url.port == 5432:
         logger.warning(
-            "Supabase pooler URL detected on port 6543. Using direct connection port 5432."
+            "Supabase pooler URL detected on port 5432. "
+            "If your project uses transaction mode, switch DATABASE_URL to port 6543."
         )
 
     query = dict(url.query)
