@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import case, func
+from sqlalchemy import case, exists, func
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 
@@ -64,21 +64,36 @@ def get_vestibular_exercises(
             detail="Dificuldade inválida. Use 'medium' ou 'hard'.",
         )
 
-    answered_subquery = (
-        db.query(UserVestibularProgress.exercise_id)
-        .filter(UserVestibularProgress.user_id == current_user.id)
-        .subquery()
-    )
-
     rows = (
         db.query(VestibularExercise)
         .filter(VestibularExercise.difficulty == difficulty)
-        .filter(~VestibularExercise.id.in_(answered_subquery))
+        .filter(
+            ~exists().where(
+                UserVestibularProgress.user_id == current_user.id,
+                UserVestibularProgress.exercise_id == VestibularExercise.id,
+            )
+        )
         .order_by(VestibularExercise.created_at.desc(), VestibularExercise.id.desc())
         .offset(offset)
         .limit(limit + 1)
         .all()
     )
+
+    if not rows:
+        has_any_for_difficulty = (
+            db.query(VestibularExercise.id)
+            .filter(VestibularExercise.difficulty == difficulty)
+            .first()
+        )
+        detail = (
+            "Nao ha mais exercicios vestibulares disponiveis para esse nivel."
+            if has_any_for_difficulty
+            else "Nao ha exercicios vestibulares cadastrados para esse nivel."
+        )
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=detail,
+        )
 
     has_more = len(rows) > limit
     items = rows[:limit]

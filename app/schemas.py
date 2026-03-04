@@ -1,5 +1,6 @@
-from pydantic import BaseModel, EmailStr
-from typing import Optional, List
+import json
+from pydantic import BaseModel, EmailStr, field_validator
+from typing import Any, Optional, List
 from uuid import UUID
 from datetime import datetime
 
@@ -210,6 +211,31 @@ class VestibularExerciseResponse(BaseModel):
     correct_answer: str
     difficulty: str
     created_at: datetime
+
+    @field_validator("options", mode="before")
+    @classmethod
+    def normalize_options(cls, value: Any) -> List[str]:
+        if isinstance(value, list):
+            return [str(item) for item in value]
+
+        if isinstance(value, dict):
+            # Keep a predictable option order for labeled maps like {"A": "...", "B": "..."}.
+            ordered_keys = sorted(value.keys(), key=lambda key: str(key))
+            return [str(value[key]) for key in ordered_keys]
+
+        if isinstance(value, str):
+            try:
+                parsed = json.loads(value)
+            except json.JSONDecodeError:
+                pass
+            else:
+                if isinstance(parsed, list):
+                    return [str(item) for item in parsed]
+                if isinstance(parsed, dict):
+                    ordered_keys = sorted(parsed.keys(), key=lambda key: str(key))
+                    return [str(parsed[key]) for key in ordered_keys]
+
+        raise ValueError("Formato invalido para options. Esperado lista ou objeto JSON.")
 
     class Config:
         from_attributes = True

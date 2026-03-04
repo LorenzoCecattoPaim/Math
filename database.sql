@@ -374,7 +374,55 @@ INSERT INTO public.exercises (question, options, correct_answer, explanation, di
 ('Qual é o MMC de 8 e 12?', '["24", "48", "96", "4"]', '24', 'MMC(8, 12) = 24', 'hard', 'arithmetic');
 
 -- ============================================
+-- Seeds Vestibulares (Premium)
+-- ============================================
+INSERT INTO public.vestibular_exercises (question, options, correct_answer, explanation, difficulty) VALUES
+(
+    'Em uma progressão aritmética, a1 = 7 e r = 3. Qual é o termo a10?',
+    '["28", "31", "34", "37"]',
+    '34',
+    'Usando an = a1 + (n-1)r: a10 = 7 + 9*3 = 34.',
+    'medium'
+),
+(
+    'Uma função quadrática tem raízes 2 e 5 e coeficiente líder 1. Qual é a função?',
+    '["x^2 - 7x + 10", "x^2 + 7x + 10", "x^2 - 3x - 10", "x^2 + 3x - 10"]',
+    'x^2 - 7x + 10',
+    'Se as raízes são 2 e 5, então f(x) = (x-2)(x-5) = x^2 - 7x + 10.',
+    'medium'
+),
+(
+    'Qual é o valor de log2(32)?',
+    '["4", "5", "6", "8"]',
+    '5',
+    'Como 2^5 = 32, temos log2(32) = 5.',
+    'medium'
+),
+(
+    'Em uma PG com a1 = 3 e razão q = 2, qual é a soma dos 6 primeiros termos?',
+    '["126", "189", "192", "255"]',
+    '189',
+    'S6 = a1 * (q^6 - 1)/(q - 1) = 3*(64-1)/1 = 189.',
+    'hard'
+),
+(
+    'Se sin(x) = 3/5 e x está no 1º quadrante, então cos(x) é:',
+    '["4/5", "3/4", "5/4", "2/5"]',
+    '4/5',
+    'Pela relação fundamental: cos^2(x) = 1 - sin^2(x) = 1 - 9/25 = 16/25.',
+    'hard'
+),
+(
+    'Resolva: 2^(x+1) = 32.',
+    '["3", "4", "5", "6"]',
+    '4',
+    'Como 32 = 2^5, temos x+1 = 5, logo x = 4.',
+    'hard'
+);
+
+-- ============================================
 -- Verificar Criação
 -- ============================================
 SELECT 'Tabelas criadas com sucesso!' as status;
 SELECT COUNT(*) as total_exercicios FROM public.exercises;
+SELECT COUNT(*) as total_exercicios_vestibular FROM public.vestibular_exercises;
