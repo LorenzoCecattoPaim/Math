@@ -1,8 +1,19 @@
 import json
-from pydantic import BaseModel, EmailStr, field_validator
 from typing import Any, Optional, List
 from uuid import UUID
 from datetime import datetime
+
+try:
+    from pydantic import BaseModel, EmailStr, field_validator
+
+    def options_validator(*fields):
+        return field_validator(*fields, mode="before")
+
+except ImportError:
+    from pydantic import BaseModel, EmailStr, validator
+
+    def options_validator(*fields):
+        return validator(*fields, pre=True)
 
 # ========================
 # Auth Schemas
@@ -212,7 +223,7 @@ class VestibularExerciseResponse(BaseModel):
     difficulty: str
     created_at: datetime
 
-    @field_validator("options", mode="before")
+    @options_validator("options")
     @classmethod
     def normalize_options(cls, value: Any) -> List[str]:
         if isinstance(value, list):
