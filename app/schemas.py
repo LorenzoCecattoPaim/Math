@@ -219,7 +219,6 @@ class VestibularExerciseResponse(BaseModel):
     id: UUID
     question: str
     options: List[str]
-    correct_answer: str
     difficulty: str
     created_at: datetime
 
@@ -266,6 +265,7 @@ class VestibularAnswerRequest(BaseModel):
 
 class VestibularAnswerResponse(BaseModel):
     correct: bool
+    correct_answer: Optional[str] = None
     explanation: Optional[str] = None
     accuracy: int
 
@@ -274,3 +274,21 @@ class VestibularStatsResponse(BaseModel):
     exercicios_feitos: int
     respostas_corretas: int
     taxa_acerto: int
+
+
+class VestibularExercisesApiResponse(BaseModel):
+    success: bool
+    message: str
+    data: VestibularExercisesPageResponse
+
+
+class VestibularAnswerApiResponse(BaseModel):
+    success: bool
+    message: str
+    data: VestibularAnswerResponse
+
+
+class VestibularStatsApiResponse(BaseModel):
+    success: bool
+    message: str
+    data: VestibularStatsResponse

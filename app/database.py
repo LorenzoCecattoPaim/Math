@@ -6,6 +6,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from app.config import (
     DATABASE_URL,
+    DB_CONNECT_TIMEOUT_SECONDS,
     DB_MAX_OVERFLOW,
     DB_POOL_SIZE,
     DB_POOL_TIMEOUT_SECONDS,
@@ -59,7 +60,7 @@ else:
             "pool_size": DB_POOL_SIZE,
             "max_overflow": DB_MAX_OVERFLOW,
             "pool_timeout": DB_POOL_TIMEOUT_SECONDS,
-            "connect_args": {"connect_timeout": 10},
+            "connect_args": {"connect_timeout": DB_CONNECT_TIMEOUT_SECONDS},
         }
     )
 

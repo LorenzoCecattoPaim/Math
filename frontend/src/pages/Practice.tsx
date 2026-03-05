@@ -144,7 +144,7 @@ export default function Practice() {
           id: apiExercise.id,
           question: apiExercise.question,
           options: apiExercise.options || [],
-          correctAnswer: apiExercise.correct_answer,
+          correctAnswer: "",
           explanation: "",
         });
       } else {
@@ -182,6 +182,7 @@ export default function Practice() {
           if (!prev) return prev;
           return {
             ...prev,
+            correctAnswer: result.correct_answer || prev.correctAnswer,
             explanation: result.explanation || "Sem explicação disponível.",
           };
         });
@@ -191,7 +192,7 @@ export default function Practice() {
           title: result.correct ? "Resposta correta!" : "Resposta incorreta",
           description: result.correct
             ? `Parabéns! Sua taxa atual no Vestibular é ${result.accuracy}%.`
-            : `A resposta correta era: ${currentExercise.correctAnswer}. Taxa atual: ${result.accuracy}%.`,
+            : `A resposta correta era: ${result.correct_answer || "indisponivel"}. Taxa atual: ${result.accuracy}%.`,
           variant: result.correct ? "default" : "destructive",
         });
       } catch (error) {
@@ -378,7 +379,7 @@ export default function Practice() {
                   {currentExercise.options.map((option, index) => {
                     const isSelected = selectedAnswer === option;
                     const isCorrect = option === currentExercise.correctAnswer;
-                    const letters = ["A", "B", "C", "D"];
+                    const letter = String.fromCharCode(65 + index);
 
                     let optionClass = "p-4 rounded-xl border-2 text-left transition-all ";
                     if (isSubmitted) {
@@ -410,7 +411,7 @@ export default function Practice() {
                                 : "bg-muted"
                             }`}
                           >
-                            {letters[index]}
+                            {letter}
                           </div>
                           <span className="font-medium flex-1">{option}</span>
                           {isSubmitted && isCorrect && <CheckCircle className="w-6 h-6 text-success" />}
@@ -448,4 +449,3 @@ export default function Practice() {
     </div>
   );
 }
-

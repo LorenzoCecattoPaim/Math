@@ -8,6 +8,7 @@ DB_POOL_SIZE = int(os.getenv("DB_POOL_SIZE", "10"))
 DB_MAX_OVERFLOW = int(os.getenv("DB_MAX_OVERFLOW", "20"))
 DB_POOL_TIMEOUT_SECONDS = int(os.getenv("DB_POOL_TIMEOUT_SECONDS", "10"))
 DB_POOL_RECYCLE_SECONDS = int(os.getenv("DB_POOL_RECYCLE_SECONDS", "1800"))
+DB_CONNECT_TIMEOUT_SECONDS = int(os.getenv("DB_CONNECT_TIMEOUT_SECONDS", "10"))
 JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "supersecretkey_change_in_production_minimum_32_chars")
 JWT_ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
 JWT_EXPIRE_MINUTES = int(os.getenv("JWT_EXPIRE_MINUTES", "60"))  # 1 hour (legacy var)
@@ -26,7 +27,10 @@ BACKEND_CORS_ORIGINS = [
     for origin in os.getenv("BACKEND_CORS_ORIGINS", "http://localhost:5173").split(",")
     if origin.strip()
 ]
-AUTO_CREATE_TABLES = os.getenv("AUTO_CREATE_TABLES", "true").strip().lower() == "true"
+auto_create_default = "false" if ENVIRONMENT == "production" else "true"
+AUTO_CREATE_TABLES = (
+    os.getenv("AUTO_CREATE_TABLES", auto_create_default).strip().lower() == "true"
+)
 
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
 EMAIL_VERIFICATION_EXPIRATION_MINUTES = int(

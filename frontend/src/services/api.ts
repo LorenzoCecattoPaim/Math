@@ -68,7 +68,7 @@ export function isEmailVerificationChallenge(
 
 async function parseError(response: Response, fallbackMessage: string): Promise<never> {
   const error = await response.json().catch(() => null);
-  const detail = error?.detail ?? error;
+  const detail = error?.detail ?? error?.message ?? error;
 
   if (response.status === 403 && typeof error?.detail === "string" && error.detail.includes("premium")) {
     const checkoutUrl = error?.checkout_url || HOTMART_CHECKOUT_URL;
@@ -494,19 +494,37 @@ export const vestibularApi = {
     if (!response.ok) {
       return parseError(response, "Erro ao carregar exercícios vestibulares");
     }
-    return response.json() as Promise<{
+    const payload = (await response.json()) as {
+      success: boolean;
+      message: string;
+      data: {
+        items: Array<{
+          id: string;
+          question: string;
+          options: string[];
+          difficulty: string;
+          created_at: string;
+        }>;
+        limit: number;
+        offset: number;
+        has_more: boolean;
+      };
+    };
+    if (!payload.success) {
+      throw new Error(payload.message || "Erro ao carregar exercicios vestibulares");
+    }
+    return payload.data as {
       items: Array<{
         id: string;
         question: string;
         options: string[];
-        correct_answer: string;
         difficulty: string;
         created_at: string;
       }>;
       limit: number;
       offset: number;
       has_more: boolean;
-    }>;
+    };
   },
 
   async submitVestibularAnswer(exercise_id: string, answer: string) {
@@ -517,11 +535,25 @@ export const vestibularApi = {
     if (!response.ok) {
       return parseError(response, "Erro ao enviar resposta vestibular");
     }
-    return response.json() as Promise<{
+    const payload = (await response.json()) as {
+      success: boolean;
+      message: string;
+      data: {
+        correct: boolean;
+        correct_answer: string | null;
+        explanation: string;
+        accuracy: number;
+      };
+    };
+    if (!payload.success) {
+      throw new Error(payload.message || "Erro ao enviar resposta vestibular");
+    }
+    return payload.data as {
       correct: boolean;
+      correct_answer: string | null;
       explanation: string;
       accuracy: number;
-    }>;
+    };
   },
 
   async getVestibularStats() {
@@ -529,10 +561,22 @@ export const vestibularApi = {
     if (!response.ok) {
       return parseError(response, "Erro ao carregar estatísticas vestibulares");
     }
-    return response.json() as Promise<{
+    const payload = (await response.json()) as {
+      success: boolean;
+      message: string;
+      data: {
+        exercicios_feitos: number;
+        respostas_corretas: number;
+        taxa_acerto: number;
+      };
+    };
+    if (!payload.success) {
+      throw new Error(payload.message || "Erro ao carregar estatisticas vestibulares");
+    }
+    return payload.data as {
       exercicios_feitos: number;
       respostas_corretas: number;
       taxa_acerto: number;
-    }>;
+    };
   },
 };
