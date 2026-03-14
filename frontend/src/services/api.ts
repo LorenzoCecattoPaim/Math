@@ -44,6 +44,21 @@ export interface UserPlanProfile {
   updated_at: string;
 }
 
+export interface SeoExercise {
+  id: string;
+  question: string;
+  options: string[] | null;
+  correct_answer: string;
+  explanation: string | null;
+  difficulty: string;
+  subject: string;
+  source: string | null;
+  theme: string | null;
+  level: string | null;
+  exam_year: number | null;
+  created_at: string;
+}
+
 export interface AuthSession {
   access_token: string;
   token_type: string;
@@ -441,6 +456,25 @@ export const exercisesApi = {
       return parseError(response, "Erro ao listar exercícios");
     }
     return response.json();
+  },
+
+  async listSeoExercises(filters: {
+    source?: string;
+    theme?: string;
+    level?: string;
+    exam_year?: number;
+    subject?: string;
+    difficulty?: string;
+    limit?: number;
+  }) {
+    const endpoint = buildEndpoint("/exercises/seo", filters);
+    const response = await fetchWithTimeout(`${API_BASE_URL}${endpoint}`, {
+      method: "GET",
+    });
+    if (!response.ok) {
+      return parseError(response, "Erro ao listar questoes para SEO");
+    }
+    return response.json() as Promise<SeoExercise[]>;
   },
 };
 

@@ -84,6 +84,7 @@ class Exercise(Base):
     __table_args__ = (
         Index("idx_exercises_subject_difficulty", "subject", "difficulty"),
         Index("idx_exercises_subject_difficulty_created_at", "subject", "difficulty", "created_at"),
+        Index("idx_exercises_source_theme_level_year", "source", "theme", "level", "exam_year"),
     )
     
     id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -93,6 +94,10 @@ class Exercise(Base):
     explanation = Column(Text, nullable=True)
     difficulty = Column(SQLEnum(DifficultyLevel), nullable=False)
     subject = Column(SQLEnum(SubjectType), nullable=False)
+    source = Column(String(50), nullable=True)
+    theme = Column(String(50), nullable=True)
+    level = Column(String(50), nullable=True)
+    exam_year = Column(Integer, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     
     attempts = relationship("ExerciseAttempt", back_populates="exercise")

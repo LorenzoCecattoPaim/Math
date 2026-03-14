@@ -3,6 +3,7 @@ import { Route, Routes } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { seoLandingPages } from "@/data/seoLandingConfig";
 
 const Landing = lazy(() => import("@/pages/Landing"));
 const Login = lazy(() => import("@/pages/Login"));
@@ -16,6 +17,8 @@ const Progress = lazy(() => import("@/pages/Progress"));
 const VerifyEmail = lazy(() => import("@/pages/VerifyEmail"));
 const NotFound = lazy(() => import("@/pages/NotFound"));
 const Support = lazy(() => import("@/pages/Support"));
+const SeoLanding = lazy(() => import("@/pages/SeoLanding"));
+const Generator = lazy(() => import("@/pages/Generator"));
 const SupportFloatingButton = lazy(() =>
   import("@/components/SupportFloatingButton").then((module) => ({
     default: module.SupportFloatingButton,
@@ -40,6 +43,10 @@ function App() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/verify-email" element={<VerifyEmail />} />
+        <Route path="/gerador" element={<Generator />} />
+        {seoLandingPages.map((page) => (
+          <Route key={page.slug} path={`/${page.slug}`} element={<SeoLanding />} />
+        ))}
         <Route
           path="/dashboard"
           element={

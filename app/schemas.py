@@ -165,6 +165,10 @@ class ExerciseResponse(BaseModel):
     explanation: Optional[str] = None
     difficulty: str
     subject: str
+    source: Optional[str] = None
+    theme: Optional[str] = None
+    level: Optional[str] = None
+    exam_year: Optional[int] = None
     created_at: datetime
     
     class Config:
@@ -177,6 +181,10 @@ class ExerciseCreate(BaseModel):
     explanation: Optional[str] = None
     difficulty: str
     subject: str
+    source: Optional[str] = None
+    theme: Optional[str] = None
+    level: Optional[str] = None
+    exam_year: Optional[int] = None
 
 # ========================
 # Attempt Schemas

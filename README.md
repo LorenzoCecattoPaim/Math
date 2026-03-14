@@ -1,6 +1,63 @@
-# ProvaLab - Plataforma de Exercícios Educacionais
+# 📚 ProvaLab
 
-Plataforma completa para estudantes praticarem exercícios de matemática com correção automática e acompanhamento de progresso.
+> Plataforma de prática de exercícios e simulados de matemática com correção automática e acompanhamento de progresso.
+
+🌐 **Acesse agora:** [provalab.com.br](https://www.provalab.com.br) — **com usuários ativos**
+
+---
+
+## 💡 Por que criei isso
+
+Muitos estudantes estudam teoria, mas nunca praticam o suficiente. Não sabem quais conteúdos erram mais, não acompanham a própria evolução e estudam de forma aleatória.
+
+O ProvaLab resolve isso centralizando prática, acompanhamento e organização em um só lugar.
+
+Sou o Lorenzo, tenho 16 anos, medalha na OBMEP e construí o ProvaLab do zero — do banco de dados ao deploy — usando FastAPI, React e PostgreSQL.
+
+---
+
+## ✅ Funcionalidades
+
+### Exercícios
+- 6 áreas da matemática: Álgebra, Geometria, Cálculo, Estatística, Trigonometria e Aritmética
+- 3 níveis de dificuldade (Fácil, Médio, Difícil)
+- Correção automática com explicações detalhadas
+
+### Progresso
+- Histórico completo de exercícios
+- Estatísticas de desempenho por conteúdo
+- Gráficos de evolução
+- Sequência de dias de estudo (streak)
+
+### Autenticação
+- Cadastro e login com email/senha
+- JWT para sessões seguras
+- Perfil do usuário
+
+---
+
+## 🛠️ Tecnologias
+
+### Backend
+| Tecnologia | Uso |
+|---|---|
+| FastAPI | Framework web |
+| SQLAlchemy | ORM |
+| Pydantic | Validação de dados |
+| JWT | Autenticação |
+| PostgreSQL (Supabase) | Banco de dados |
+
+### Frontend
+| Tecnologia | Uso |
+|---|---|
+| React 18 + TypeScript | Interface |
+| Tailwind CSS | Estilização |
+| React Query | Gerenciamento de estado |
+| Recharts | Gráficos de progresso |
+| Framer Motion | Animações |
+| React Router | Roteamento |
+
+---
 
 ## 📁 Estrutura do Projeto
 
@@ -8,7 +65,6 @@ Plataforma completa para estudantes praticarem exercícios de matemática com co
 provalab/
 ├── backend/                    # API FastAPI (Python)
 │   ├── app/
-│   │   ├── __init__.py
 │   │   ├── main.py            # Entrada da aplicação
 │   │   ├── config.py          # Configurações
 │   │   ├── database.py        # Conexão com banco
@@ -16,72 +72,59 @@ provalab/
 │   │   ├── schemas.py         # Schemas Pydantic
 │   │   ├── auth.py            # Autenticação JWT
 │   │   └── routers/
-│   │       ├── __init__.py
 │   │       ├── auth.py        # Rotas de autenticação
 │   │       ├── profiles.py    # Rotas de perfil
 │   │       ├── exercises.py   # Rotas de exercícios
 │   │       └── attempts.py    # Rotas de tentativas
-│   ├── requirements.txt       # Dependências Python
-│   └── .env.example           # Exemplo de variáveis de ambiente
+│   ├── requirements.txt
+│   └── .env.example
 │
 ├── frontend/                   # React + TypeScript + Tailwind
-│   ├── public/
 │   ├── src/
 │   │   ├── components/        # Componentes reutilizáveis
 │   │   ├── contexts/          # Contextos React
 │   │   ├── hooks/             # Hooks personalizados
-│   │   ├── lib/               # Utilitários
 │   │   ├── pages/             # Páginas da aplicação
 │   │   ├── services/          # Serviços de API
-│   │   ├── App.tsx            # Componente principal
-│   │   ├── main.tsx           # Entrada do React
-│   │   └── index.css          # Estilos globais
-│   ├── package.json           # Dependências Node
-│   ├── vite.config.ts         # Configuração Vite
-│   ├── tailwind.config.ts     # Configuração Tailwind
-│   └── .env.example           # Exemplo de variáveis
+│   │   └── App.tsx
+│   ├── package.json
+│   └── vite.config.ts
 │
 └── database.sql               # Script SQL do banco de dados
 ```
 
-## 🚀 Como Executar
+---
+
+## 🚀 Como Executar Localmente
 
 ### Pré-requisitos
-
 - Python 3.11+
 - Node.js 18+
-- PostgreSQL (Supabase)
+- PostgreSQL (ou conta no [Supabase](https://supabase.com))
 
-### 1. Configurar o Banco de Dados
+### 1. Banco de Dados
 
-1. Acesse o SQL Editor do seu projeto Supabase
-2. Execute o conteúdo do arquivo `database.sql`
-3. Isso criará as tabelas e inserirá exercícios de exemplo
+1. Crie um projeto no Supabase
+2. Acesse o SQL Editor e execute o conteúdo de `database.sql`
 
-### 2. Configurar o Backend
+### 2. Backend
 
 ```bash
-# Entrar na pasta do backend
 cd provalab/backend
 
-# Criar ambiente virtual
+# Criar e ativar ambiente virtual
 python -m venv venv
-
-# Ativar ambiente virtual
-# Windows:
-venv\Scripts\activate
-# Linux/Mac:
-source venv/bin/activate
+source venv/bin/activate  # Linux/Mac
+venv\Scripts\activate     # Windows
 
 # Instalar dependências
 pip install -r requirements.txt
 
-# Copiar e configurar variáveis de ambiente
+# Configurar variáveis de ambiente
 cp .env.example .env
-# Edite o arquivo .env com suas credenciais do Supabase
 ```
 
-**Configurar o arquivo `.env`:**
+Configure o `.env`:
 
 ```env
 DATABASE_URL=postgresql://postgres.[PROJECT_ID]:[SUA_SENHA]@aws-0-us-east-1.pooler.supabase.com:6543/postgres
@@ -90,104 +133,50 @@ JWT_ALGORITHM=HS256
 JWT_EXPIRE_MINUTES=1440
 ```
 
-**Iniciar o backend:**
+Iniciar o backend:
 
 ```bash
 uvicorn app.main:app --reload --port 8000
 ```
 
-A API estará disponível em: `http://localhost:8000`
-Documentação: `http://localhost:8000/docs`
+API disponível em `http://localhost:8000` — docs em `http://localhost:8000/docs`
 
-### 3. Configurar o Frontend
+### 3. Frontend
 
 ```bash
-# Entrar na pasta do frontend
 cd provalab/frontend
-
-# Instalar dependências
 npm install
-
-# Copiar e configurar variáveis de ambiente
 cp .env.example .env
-# O arquivo .env já vem configurado para localhost:8000
-```
-
-**Iniciar o frontend:**
-
-```bash
 npm run dev
 ```
 
-O frontend estará disponível em: `http://localhost:5173`
+Frontend disponível em `http://localhost:5173`
 
-## 📚 Funcionalidades
-
-### Autenticação
-- Cadastro de usuários
-- Login com email e senha
-- Autenticação via JWT
-- Perfil do usuário
-
-### Exercícios
-- 6 disciplinas de matemática:
-  - Álgebra
-  - Geometria
-  - Cálculo
-  - Estatística
-  - Trigonometria
-  - Aritmética
-- 3 níveis de dificuldade (Fácil, Médio, Difícil)
-- Correção automática
-- Explicações detalhadas
-
-### Progresso
-- Histórico de exercícios
-- Estatísticas de desempenho
-- Gráficos de evolução
-- Sequência de dias de estudo
+---
 
 ## 🔌 Rotas da API
 
-### Autenticação
-- `POST /auth/signup` - Criar conta
-- `POST /auth/login` - Fazer login
-- `GET /auth/me` - Dados do usuário
+| Método | Rota | Descrição |
+|--------|------|-----------|
+| POST | `/auth/signup` | Criar conta |
+| POST | `/auth/login` | Fazer login |
+| GET | `/auth/me` | Dados do usuário |
+| GET | `/profiles/me` | Obter perfil |
+| PUT | `/profiles/me` | Atualizar perfil |
+| GET | `/exercises` | Listar exercícios |
+| GET | `/exercises/random` | Exercício aleatório |
+| POST | `/exercises` | Criar exercício |
+| GET | `/attempts` | Histórico |
+| GET | `/attempts/stats` | Estatísticas |
+| GET | `/attempts/progress` | Dados de progresso |
+| POST | `/attempts` | Registrar tentativa |
 
-### Perfil
-- `GET /profiles/me` - Obter perfil
-- `PUT /profiles/me` - Atualizar perfil
-
-### Exercícios
-- `GET /exercises` - Listar exercícios
-- `GET /exercises/random` - Exercício aleatório
-- `GET /exercises/{id}` - Obter exercício
-- `POST /exercises` - Criar exercício
-
-### Tentativas
-- `GET /attempts` - Histórico de tentativas
-- `GET /attempts/stats` - Estatísticas
-- `GET /attempts/progress` - Dados de progresso
-- `POST /attempts` - Registrar tentativa
-
-## 🛠️ Tecnologias
-
-### Backend
-- **FastAPI** - Framework web
-- **SQLAlchemy** - ORM
-- **Pydantic** - Validação de dados
-- **JWT** - Autenticação
-- **PostgreSQL** - Banco de dados
-
-### Frontend
-- **React 18** - Biblioteca UI
-- **TypeScript** - Tipagem estática
-- **Tailwind CSS** - Estilização
-- **React Query** - Gerenciamento de estado
-- **Framer Motion** - Animações
-- **Recharts** - Gráficos
-- **React Router** - Roteamento
+---
 
 ## 📝 Licença
 
-Este projeto é de código aberto e pode ser usado livremente.
+Código aberto — pode ser usado livremente.
+
+---
+
+Desenvolvido por **Lorenzo Cecatto Paim** — [Portfólio](https://lorenzocecattopaim.github.io/Portifolio_/) · [LinkedIn](https://www.linkedin.com/in/lorenzo-cecatto-paim-9b19012b6/)

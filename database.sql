@@ -52,6 +52,10 @@ CREATE TABLE IF NOT EXISTS public.exercises (
     explanation TEXT,
     difficulty difficulty_level NOT NULL,
     subject subject_type NOT NULL,
+    source VARCHAR(50),
+    theme VARCHAR(50),
+    level VARCHAR(50),
+    exam_year INTEGER,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -173,6 +177,10 @@ ALTER TABLE public.refresh_sessions ADD COLUMN IF NOT EXISTS revoked_at TIMESTAM
 ALTER TABLE public.refresh_sessions ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
 ALTER TABLE public.refresh_sessions ADD COLUMN IF NOT EXISTS last_used_at TIMESTAMP WITH TIME ZONE;
 ALTER TABLE public.refresh_sessions ADD COLUMN IF NOT EXISTS request_ip VARCHAR(64);
+ALTER TABLE public.exercises ADD COLUMN IF NOT EXISTS source VARCHAR(50);
+ALTER TABLE public.exercises ADD COLUMN IF NOT EXISTS theme VARCHAR(50);
+ALTER TABLE public.exercises ADD COLUMN IF NOT EXISTS level VARCHAR(50);
+ALTER TABLE public.exercises ADD COLUMN IF NOT EXISTS exam_year INTEGER;
 DO $$
 BEGIN
     IF EXISTS (
@@ -202,6 +210,11 @@ CREATE INDEX IF NOT EXISTS idx_exercises_subject ON public.exercises(subject);
 CREATE INDEX IF NOT EXISTS idx_exercises_difficulty ON public.exercises(difficulty);
 CREATE INDEX IF NOT EXISTS idx_exercises_subject_difficulty ON public.exercises(subject, difficulty);
 CREATE INDEX IF NOT EXISTS idx_exercises_subject_difficulty_created_at ON public.exercises(subject, difficulty, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_exercises_source ON public.exercises(source);
+CREATE INDEX IF NOT EXISTS idx_exercises_theme ON public.exercises(theme);
+CREATE INDEX IF NOT EXISTS idx_exercises_level ON public.exercises(level);
+CREATE INDEX IF NOT EXISTS idx_exercises_exam_year ON public.exercises(exam_year);
+CREATE INDEX IF NOT EXISTS idx_exercises_source_theme_level_year ON public.exercises(source, theme, level, exam_year);
 CREATE INDEX IF NOT EXISTS idx_attempts_user_id ON public.exercise_attempts(user_id);
 CREATE INDEX IF NOT EXISTS idx_attempts_exercise_id ON public.exercise_attempts(exercise_id);
 CREATE INDEX IF NOT EXISTS idx_attempts_user_created_at ON public.exercise_attempts(user_id, created_at DESC);
@@ -418,6 +431,94 @@ INSERT INTO public.vestibular_exercises (question, options, correct_answer, expl
     '4',
     'Como 32 = 2^5, temos x+1 = 5, logo x = 4.',
     'hard'
+);
+
+-- ============================================
+-- Seeds SEO (ENEM e OBMEP)
+-- ============================================
+INSERT INTO public.exercises (
+    question,
+    options,
+    correct_answer,
+    explanation,
+    difficulty,
+    subject,
+    source,
+    theme,
+    level,
+    exam_year
+) VALUES
+(
+    'ENEM 2023: Em um triangulo retangulo, os catetos medem 6 e 8. Qual e a hipotenusa?',
+    '["10", "12", "14", "16"]',
+    '10',
+    'Pelo teorema de Pitagoras: h^2 = 6^2 + 8^2 = 100, logo h = 10.',
+    'medium',
+    'geometry',
+    'ENEM',
+    'geometria',
+    'medio',
+    2023
+),
+(
+    'ENEM 2022: A media de 4, 6, 8 e 10 e:',
+    '["6", "7", "8", "9"]',
+    '7',
+    'A media aritmetica e (4+6+8+10)/4 = 7.',
+    'easy',
+    'statistics',
+    'ENEM',
+    'estatistica',
+    'medio',
+    2022
+),
+(
+    'ENEM 2021: Se f(x) = 2x + 3, entao f(5) e:',
+    '["11", "12", "13", "14"]',
+    '13',
+    'Substituindo x = 5: f(5) = 2*5 + 3 = 13.',
+    'easy',
+    'algebra',
+    'ENEM',
+    'funcoes',
+    'medio',
+    2021
+),
+(
+    'OBMEP Nivel 1: Qual o valor de 25% de 80?',
+    '["15", "20", "25", "30"]',
+    '20',
+    '25% de 80 = 0,25 * 80 = 20.',
+    'easy',
+    'arithmetic',
+    'OBMEP',
+    'algebra',
+    'olimpiada',
+    2024
+),
+(
+    'OBMEP Nivel 2: Um quadrado tem lado 9. Qual sua area?',
+    '["18", "27", "72", "81"]',
+    '81',
+    'Area do quadrado = lado^2 = 9^2 = 81.',
+    'medium',
+    'geometry',
+    'OBMEP',
+    'geometria',
+    'olimpiada',
+    2023
+),
+(
+    'OBMEP Nivel 3: Resolva 3x - 7 = 11.',
+    '["4", "5", "6", "7"]',
+    '6',
+    '3x = 18, logo x = 6.',
+    'medium',
+    'algebra',
+    'OBMEP',
+    'algebra',
+    'olimpiada',
+    2022
 );
 
 -- ============================================
